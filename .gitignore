@@ -1,0 +1,23 @@
+node_modules
+.next
+out
+dist
+.env
+.env*.local
+*.tsbuildinfo
+vercel
+*.log
+
+.vercel
+
+# Archivos de video/media pesados (usar almacenamiento externo)
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.webm
+
+.vercel
+
+# Datos privados de invitados (no subir nunca)
+_private/

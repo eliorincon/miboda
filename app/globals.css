@@ -1,0 +1,454 @@
+@import "tailwindcss";
+
+:root {
+  --night: #0c1d0e;
+  --emerald: #154d35;
+  --gold: #837e5e;
+  --champagne: #a39f88;
+  --ivory: #f7f3ea;
+  --floral: #e2e5e2;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 15% 8%, rgba(247, 243, 234, 0.1), transparent 26rem),
+    radial-gradient(circle at 86% 12%, rgba(131, 126, 94, 0.16), transparent 24rem),
+    linear-gradient(180deg, #0c1d0e 0%, #102715 45%, #0c1d0e 100%);
+  color: var(--ivory);
+  font-family: var(--font-inter), system-ui, sans-serif;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.font-display {
+  font-family: var(--font-playfair), Georgia, serif;
+}
+
+.font-script {
+  font-family: var(--font-script), cursive;
+}
+
+.container-shell {
+  width: min(1120px, calc(100% - 32px));
+  margin-inline: auto;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.text-pretty {
+  text-wrap: pretty;
+}
+
+.overflow-wrap-anywhere {
+  overflow-wrap: anywhere;
+}
+
+.gold-line {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(131, 126, 94, 0.9), transparent);
+}
+
+.glass-panel {
+  border: 1px solid rgba(247, 243, 234, 0.14);
+  background: rgba(247, 243, 234, 0.08);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.24);
+  backdrop-filter: blur(18px);
+}
+
+.liquid-glass {
+  position: relative;
+  border: 1px solid rgba(247, 243, 234, 0.24);
+  background:
+    linear-gradient(135deg, rgba(247, 243, 234, 0.22), rgba(247, 243, 234, 0.06) 46%, rgba(131, 126, 94, 0.12)),
+    rgba(12, 29, 14, 0.28);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -24px 46px rgba(12, 29, 14, 0.18),
+    0 28px 90px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(24px) saturate(1.25);
+}
+
+.liquid-glass::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 18% 14%, rgba(255, 255, 255, 0.36), transparent 22%),
+    linear-gradient(120deg, rgba(255, 255, 255, 0.2), transparent 34%);
+  opacity: 0.76;
+  pointer-events: none;
+}
+
+.liquid-glass::after {
+  content: "";
+  position: absolute;
+  inset: auto 18% 0 18%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(247, 243, 234, 0.64), transparent);
+  pointer-events: none;
+}
+
+.liquid-glass > * {
+  position: relative;
+  z-index: 1;
+}
+
+.intro-photo-bg {
+  background-image:
+    linear-gradient(180deg, rgba(12, 29, 14, 0.18), rgba(12, 29, 14, 0.64)),
+    radial-gradient(circle at 50% 35%, rgba(247, 243, 234, 0.16), transparent 34rem),
+    url("/antepag.webp");
+  background-position: center 68%;
+  background-size: cover;
+}
+
+.intro-card {
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+}
+
+.intro-title {
+  font-size: clamp(4rem, 18vw, 6rem);
+}
+
+.hero-stage-bg {
+  background-image:
+    linear-gradient(180deg, rgba(12, 29, 14, 0.42), rgba(12, 29, 14, 0.96)),
+    radial-gradient(circle at 50% 0%, rgba(247, 243, 234, 0.14), transparent 34rem),
+    url("/antepag.webp");
+  background-position: center center;
+  background-size: cover;
+}
+
+.hero-message-band {
+  background:
+    radial-gradient(circle at 20% 0%, rgba(21, 77, 53, 0.38), transparent 28rem),
+    radial-gradient(circle at 82% 100%, rgba(131, 126, 94, 0.22), transparent 24rem),
+    radial-gradient(circle at 50% 50%, rgba(247, 243, 234, 0.06), transparent 36rem),
+    linear-gradient(180deg, #0c1d0e 0%, #102715 55%, #0c1d0e 100%);
+}
+
+.hero-cinema-section {
+  min-height: 100svh;
+  background: #050705;
+}
+
+.hero-cinema {
+  position: relative;
+  width: 100%;
+  height: 100svh;
+  min-height: 560px;
+  background: #050705;
+  isolation: isolate;
+}
+
+.hero-cinema::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.32), transparent 22%, transparent 52%, rgba(0, 0, 0, 0.88));
+  pointer-events: none;
+}
+
+.hero-cinema-text {
+  position: absolute;
+  inset: auto auto 10% 6%;
+  z-index: 3;
+  width: min(760px, calc(100% - 32px));
+  text-shadow: 0 20px 70px rgba(0, 0, 0, 0.72);
+}
+
+.hero-title {
+  font-size: clamp(2.45rem, 10vw, 4.25rem);
+}
+
+.hero-copy {
+  font-size: clamp(1rem, 3.8vw, 1.125rem);
+}
+
+.responsive-action {
+  min-height: 52px;
+  white-space: normal;
+  text-align: center;
+}
+
+.responsive-kicker {
+  letter-spacing: clamp(0.12em, 2.8vw, 0.32em);
+}
+
+.gift-cards-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  justify-content: center;
+}
+
+@media (min-width: 560px) {
+  .gift-cards-grid {
+    flex-direction: row;
+  }
+}
+
+.gift-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  max-width: 280px;
+  margin-inline: auto;
+  padding: 2rem 1.75rem;
+  border-radius: 1.5rem;
+  border: 1px solid rgba(247, 243, 234, 0.18);
+  background:
+    linear-gradient(135deg, rgba(247, 243, 234, 0.14), rgba(247, 243, 234, 0.04) 60%),
+    rgba(12, 29, 14, 0.3);
+  backdrop-filter: blur(18px);
+  text-align: center;
+  text-decoration: none;
+  transition: background 0.22s, border-color 0.22s, transform 0.18s;
+  cursor: pointer;
+}
+
+.gift-card:hover {
+  background:
+    linear-gradient(135deg, rgba(247, 243, 234, 0.22), rgba(247, 243, 234, 0.08) 60%),
+    rgba(12, 29, 14, 0.3);
+  border-color: rgba(247, 243, 234, 0.3);
+  transform: translateY(-3px);
+}
+
+.gift-card-icon {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  border: 1px solid rgba(163, 159, 136, 0.4);
+  background: rgba(12, 29, 14, 0.4);
+  color: #a39f88;
+  margin-bottom: 0.25rem;
+}
+
+.gift-card-title {
+  font-family: var(--font-playfair), Georgia, serif;
+  font-size: 1.25rem;
+  color: #f7f3ea;
+}
+
+.gift-card-desc {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: #a39f88;
+  max-width: 18ch;
+}
+
+.gift-card-cta {
+  margin-top: 0.5rem;
+  display: inline-block;
+  padding: 0.5rem 1.25rem;
+  border-radius: 9999px;
+  background: #f7f3ea;
+  color: #0c1d0e;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.gift-card-cta--outline {
+  background: transparent;
+  border: 1px solid rgba(131, 126, 94, 0.55);
+  color: #f7f3ea;
+}
+
+.gift-section-bg {
+  background-image:
+    linear-gradient(180deg, rgba(12, 29, 14, 0.62), rgba(12, 29, 14, 0.9)),
+    linear-gradient(90deg, rgba(12, 29, 14, 0.76), rgba(12, 29, 14, 0.26), rgba(12, 29, 14, 0.82)),
+    url("/lluviadeestrellas.webp");
+  background-position: center 46%;
+  background-size: cover;
+  border-block: 1px solid rgba(247, 243, 234, 0.12);
+}
+
+.liquid-button {
+  border: 1px solid rgba(247, 243, 234, 0.28);
+  background:
+    linear-gradient(135deg, rgba(247, 243, 234, 0.96), rgba(226, 229, 226, 0.74)),
+    rgba(247, 243, 234, 0.9);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 18px 45px rgba(0, 0, 0, 0.28);
+}
+
+.ivory-panel {
+  border: 1px solid rgba(131, 126, 94, 0.26);
+  background: rgba(247, 243, 234, 0.94);
+  color: #15351f;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.18);
+}
+
+.botanical {
+  position: relative;
+  overflow: hidden;
+}
+
+.botanical::before,
+.botanical::after {
+  content: "";
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  border: 1px solid rgba(131, 126, 94, 0.24);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.botanical::before {
+  top: -86px;
+  right: -76px;
+}
+
+.botanical::after {
+  bottom: -96px;
+  left: -88px;
+}
+
+/* ── Admin UI ─────────────────────────────────────────────────────────────── */
+.admin-input {
+  border: 1px solid rgba(131, 126, 94, 0.3);
+  background: white;
+  color: #15351f;
+  padding: 0.55rem 0.85rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.admin-input:focus {
+  border-color: #154d35;
+}
+.admin-label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #15351f;
+}
+.admin-btn-primary {
+  background: #154d35;
+  color: #f7f3ea;
+  padding: 0.55rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  transition: background 0.15s;
+}
+.admin-btn-primary:hover {
+  background: #0c1d0e;
+}
+.admin-btn-outline {
+  border: 1px solid rgba(131, 126, 94, 0.35);
+  color: #15351f;
+  background: white;
+  padding: 0.55rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  transition: border-color 0.15s;
+}
+.admin-btn-outline:hover {
+  border-color: #154d35;
+}
+.admin-icon-btn {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  color: #837e5e;
+  transition: background 0.12s, color 0.12s;
+}
+.admin-icon-btn:hover {
+  background: rgba(131, 126, 94, 0.12);
+  color: #15351f;
+}
+
+.focus-ring:focus-visible {
+  outline: 2px solid var(--ivory);
+  outline-offset: 3px;
+}
+
+@media (max-width: 640px) {
+  .container-shell {
+    width: min(100% - 24px, 1120px);
+  }
+
+  .intro-photo-bg {
+    background-position: center 35%;
+  }
+
+  .hero-stage-bg {
+    background-position: center bottom;
+  }
+
+  .hero-cinema {
+    height: 100svh;
+    min-height: 560px;
+  }
+
+  .hero-cinema-text {
+    inset: auto 16px 9% 16px;
+    width: auto;
+  }
+
+  .gift-section-bg {
+    background-image:
+      linear-gradient(180deg, rgba(12, 29, 14, 0.54), rgba(12, 29, 14, 0.92)),
+      url("/lluviadeestrellas.webp");
+    background-position: center center;
+  }
+}
+
+@media (max-width: 420px) {
+  .intro-card {
+    border-radius: 1.35rem;
+    padding: 2rem 1rem;
+  }
+
+  .hero-cinema {
+    height: 100svh;
+    min-height: 520px;
+  }
+
+  .mobile-tight-glass {
+    border-radius: 1.35rem;
+  }
+
+  .responsive-action {
+    width: 100%;
+    padding-inline: 1rem;
+  }
+
+  .ivory-panel {
+    border-radius: 1rem;
+  }
+}

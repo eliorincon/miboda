@@ -314,6 +314,7 @@ export function HomeClient({ settings, dateLabel, guest = null }: HomeClientProp
                     {new Date(settings.rsvp_deadline).toLocaleDateString("es-CL", {
                       day: "numeric",
                       month: "long",
+                      timeZone: "America/Santiago",
                     })}
                   </span>.
                 </p>

@@ -12,7 +12,7 @@ const details = [
 ];
 
 // Número de contacto en formato internacional sin "+" (ej. 569XXXXXXXX).
-const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "";
+const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "56963434353";
 const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=Hola%2C%20tengo%20una%20consulta%20sobre%20la%20boda%20de%20Zequelly%20%26%20Elio%20%F0%9F%92%9B`;
 
 export function InfoPopup() {

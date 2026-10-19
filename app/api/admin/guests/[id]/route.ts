@@ -12,7 +12,10 @@ export async function PUT(request: Request, { params }: Params) {
   const { id } = await params;
   try {
     const body = await request.json();
-    const input = updateGuestSchema.parse(body);
+    const parsed = updateGuestSchema.safeParse(body);
+    if (!parsed.success)
+      return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
+    const input = parsed.data;
     const guest = await updateGuest(id, input);
     return NextResponse.json({ guest });
   } catch (e) {

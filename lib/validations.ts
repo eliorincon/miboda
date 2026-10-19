@@ -33,8 +33,15 @@ export const createGuestSchema = z.object({
 
 export const updateGuestSchema = z.object({
   display_name: z.string().min(2).max(120).optional(),
-  phone: z.string().max(20).nullable().optional(),
-  email: z.string().email().max(120).nullable().optional(),
+  // Campos vacíos del formulario se guardan como null
+  phone: z.preprocess(
+    (v) => (typeof v === "string" && v.trim() === "" ? null : v),
+    z.string().max(20).nullable().optional(),
+  ),
+  email: z.preprocess(
+    (v) => (typeof v === "string" && v.trim() === "" ? null : v),
+    z.string().trim().email("Email inválido").max(120).nullable().optional(),
+  ),
   group_name: z.string().min(1).max(80).optional(),
   max_guests: z.number().int().min(1).max(20).optional(),
   // Nombres de los integrantes (uno por elemento); el servidor preserva las

@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Check,
+  ChevronDown,
   ClipboardCopy,
   Download,
   Eye,
@@ -334,6 +335,8 @@ export function AdminDashboard({ guests: initialGuests, siteUrl }: Props) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [messageGuest, setMessageGuest] = useState<Guest | null>(null);
   const [msgCopied, setMsgCopied] = useState(false);
+  // Vista móvil: invitado con las opciones desplegadas
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   // Derived
   const groups = useMemo(
@@ -562,8 +565,156 @@ export function AdminDashboard({ guests: initialGuests, siteUrl }: Props) {
           )}
         </div>
 
-        {/* Table */}
-        <div className="overflow-hidden rounded-2xl border border-[#837E5E]/15 bg-white">
+        {/* Lista móvil: al tocar un invitado se despliegan sus opciones */}
+        <div className="overflow-hidden rounded-2xl border border-[#837E5E]/15 bg-white md:hidden">
+          {filtered.length === 0 ? (
+            <p className="px-4 py-8 text-center text-sm text-[#A39F88]">
+              No se encontraron invitados con esos filtros.
+            </p>
+          ) : (
+            <ul className="divide-y divide-[#837E5E]/10">
+              {filtered.map((g) => {
+                const open = expandedId === g.id;
+                return (
+                  <li className={open ? "bg-[#F7F3EA]/70" : ""} key={g.id}>
+                    <button
+                      aria-expanded={open}
+                      className="flex w-full items-center gap-3 px-4 py-3.5 text-left"
+                      onClick={() => setExpandedId(open ? null : g.id)}
+                      type="button"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-semibold">{g.display_name}</p>
+                        <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs">
+                          <span className="text-[#837E5E]">{g.group_name}</span>
+                          <span className="text-[#A39F88]">·</span>
+                          <span className="text-[#837E5E]">
+                            {g.confirmed_count}/{g.max_guests}
+                          </span>
+                          {g.has_opened_invitation ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] text-emerald-700">
+                              <Eye size={10} /> Abierta
+                            </span>
+                          ) : null}
+                          {g.message ? (
+                            <MessageSquareText className="text-[#154D35]" size={12} />
+                          ) : null}
+                        </div>
+                      </div>
+                      {badge(g.status)}
+                      <ChevronDown
+                        className={`shrink-0 text-[#A39F88] transition-transform ${open ? "rotate-180" : ""}`}
+                        size={18}
+                      />
+                    </button>
+
+                    <AnimatePresence initial={false}>
+                      {open ? (
+                        <motion.div
+                          animate={{ height: "auto", opacity: 1 }}
+                          className="overflow-hidden"
+                          exit={{ height: 0, opacity: 0 }}
+                          initial={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.2, ease: "easeOut" }}
+                        >
+                          <div className="space-y-3 px-4 pb-4">
+                            {g.members && g.members.length > 0 ? (
+                              <div className="flex flex-wrap gap-1">
+                                {g.members.map((m, i) => (
+                                  <span
+                                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                                      m.confirmed
+                                        ? "bg-emerald-100 text-emerald-800"
+                                        : "bg-gray-100 text-gray-500"
+                                    }`}
+                                    key={`${m.name}-${i}`}
+                                  >
+                                    {m.confirmed ? (
+                                      <Check size={10} strokeWidth={3} />
+                                    ) : (
+                                      <X size={10} strokeWidth={3} />
+                                    )}
+                                    {m.name}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : null}
+
+                            {g.message ? (
+                              <button
+                                className="flex w-full items-start gap-1.5 rounded-xl border border-[#837E5E]/20 bg-white px-3 py-2 text-left"
+                                onClick={() => {
+                                  setMessageGuest(g);
+                                  setMsgCopied(false);
+                                }}
+                                type="button"
+                              >
+                                <MessageSquareText
+                                  className="mt-0.5 flex-shrink-0 text-[#154D35]"
+                                  size={13}
+                                />
+                                <span className="line-clamp-3 text-xs italic text-[#837E5E]">
+                                  &ldquo;{g.message}&rdquo;
+                                </span>
+                              </button>
+                            ) : null}
+
+                            <div className="grid grid-cols-2 gap-2">
+                              <button
+                                className="admin-btn-outline flex items-center justify-center gap-1.5 text-xs"
+                                onClick={() => copyLink(g)}
+                                type="button"
+                              >
+                                {copiedId === g.id + "_link" ? (
+                                  <Check size={14} className="text-emerald-600" />
+                                ) : (
+                                  <ClipboardCopy size={14} />
+                                )}
+                                {copiedId === g.id + "_link" ? "¡Copiado!" : "Copiar link"}
+                              </button>
+                              <button
+                                className="admin-btn-outline flex items-center justify-center gap-1.5 text-xs"
+                                onClick={() => copyWhatsApp(g)}
+                                type="button"
+                              >
+                                {copiedId === g.id + "_wa" ? (
+                                  <Check size={14} className="text-emerald-600" />
+                                ) : (
+                                  <MessageCircle size={14} />
+                                )}
+                                {copiedId === g.id + "_wa" ? "¡Copiado!" : "Mensaje WhatsApp"}
+                              </button>
+                              <button
+                                className="admin-btn-outline flex items-center justify-center gap-1.5 text-xs"
+                                onClick={() => setEditGuest(g)}
+                                type="button"
+                              >
+                                <Pencil size={14} /> Editar
+                              </button>
+                              <button
+                                className="admin-btn-outline flex items-center justify-center gap-1.5 text-xs text-red-500"
+                                onClick={() => handleDelete(g)}
+                                type="button"
+                              >
+                                <Trash2 size={14} /> Eliminar
+                              </button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ) : null}
+                    </AnimatePresence>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          <div className="border-t border-[#837E5E]/10 px-4 py-3 text-xs text-[#A39F88]">
+            Mostrando {filtered.length} de {guests.length} invitados
+          </div>
+        </div>
+
+        {/* Table (tablet y computador) */}
+        <div className="hidden overflow-hidden rounded-2xl border border-[#837E5E]/15 bg-white md:block">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[860px] text-left text-sm">
               <thead>

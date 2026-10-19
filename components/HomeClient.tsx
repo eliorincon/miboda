@@ -22,6 +22,8 @@ type HomeClientProps = {
   settings: Settings;
   dateLabel: string;
   guest?: Guest | null;
+  /** Oculta la "Lluvia de amor" (invitados que ya hicieron su regalo) */
+  hideGifts?: boolean;
 };
 
 const heroSlides = [
@@ -47,13 +49,14 @@ const heroSlides = [
 
 type Phase = "intro" | "video" | "entered";
 
-export function HomeClient({ settings, dateLabel, guest = null }: HomeClientProps) {
+export function HomeClient({ settings, dateLabel, guest = null, hideGifts = false }: HomeClientProps) {
   // Nuevo flujo: el video arranca de inmediato ("video"); al segundo 10
   // aparece la portada "Abrir nuestra historia" sobre el video ("intro");
   // al hacer click se entra a la web y suena la música ("entered").
   // Si no hay video configurado, empezamos directo en la portada.
+  // Con link personalizado se entra directo y se abre la tarjeta informativa.
   const [phase, setPhase] = useState<Phase>(
-    settings.save_the_date_url ? "video" : "intro",
+    guest ? "entered" : settings.save_the_date_url ? "video" : "intro",
   );
   const [activeSlide, setActiveSlide] = useState(0);
   const [rsvpOpen, setRsvpOpen] = useState(false);
@@ -94,7 +97,7 @@ export function HomeClient({ settings, dateLabel, guest = null }: HomeClientProp
   useEffect(() => {
     if (!entered || !guest || infoShown.current) return;
     infoShown.current = true;
-    const timer = window.setTimeout(() => setInfoOpen(true), 900);
+    const timer = window.setTimeout(() => setInfoOpen(true), 150);
     return () => window.clearTimeout(timer);
   }, [entered, guest]);
 
@@ -154,6 +157,7 @@ export function HomeClient({ settings, dateLabel, guest = null }: HomeClientProp
       {guest ? (
         <GuestInfoCard
           guest={guest}
+          hideGifts={hideGifts}
           isOpen={infoOpen}
           onClose={() => setInfoOpen(false)}
           settings={settings}
@@ -330,8 +334,8 @@ export function HomeClient({ settings, dateLabel, guest = null }: HomeClientProp
                       Todo para el gran día
                     </h2>
                     <p className="hero-copy text-pretty mx-auto mt-5 max-w-lg text-center leading-8 text-[#E2E5E2] sm:leading-9">
-                      Horarios, ubicaciones, dress code, lluvia de amor y un espacio para dejarnos
-                      un mensaje que veremos en las pantallas del salón.
+                      Horarios, ubicaciones, dress code{hideGifts ? "" : ", lluvia de amor"} y un
+                      espacio para dejarnos un mensaje que veremos en las pantallas del salón.
                     </p>
                     <div className="gold-line mx-auto mt-7 w-16" />
                     <button
@@ -392,6 +396,7 @@ export function HomeClient({ settings, dateLabel, guest = null }: HomeClientProp
           </div>
         </Section>
 
+        {!hideGifts && (
         <section className="gift-section-bg relative overflow-hidden py-20 sm:py-28" id="regalo">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_55%_at_50%_0%,rgba(247,243,234,0.16),transparent)]" />
           <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-30">
@@ -416,6 +421,7 @@ export function HomeClient({ settings, dateLabel, guest = null }: HomeClientProp
             <GiftModal settings={settings} />
           </div>
         </section>
+        )}
 
         <Section eyebrow="Playlist" title="La música de nuestra historia">
           <p className="mx-auto mb-8 max-w-2xl text-center leading-8 text-[#E2E5E2]">

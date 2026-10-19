@@ -1,6 +1,6 @@
 import { HomeClient } from "@/components/HomeClient";
 import { getGuestByCode, markGuestOpened } from "@/lib/guests";
-import { formatWeddingDate, settings } from "@/lib/settings";
+import { formatWeddingDate, hasGivenGift, settings } from "@/lib/settings";
 import Link from "next/link";
 
 type GuestPageProps = {
@@ -40,6 +40,7 @@ export default async function GuestPage({ params }: GuestPageProps) {
     <HomeClient
       dateLabel={formatWeddingDate()}
       guest={guest}
+      hideGifts={hasGivenGift(guest.display_name)}
       settings={settings}
     />
   );

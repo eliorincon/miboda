@@ -10,8 +10,14 @@ export const settings: Settings = {
   ceremony_address: "Av. José Miguel Carrera 3520, Paradero 6, San Miguel",
   party_place: "Full Party",
   party_time: "19:00 a 02:00 hrs",
-  // Hora desde la que se abre la entrada al salón
+  // Nombres de los lugares (tarjeta del invitado)
+  ceremony_venue: "Iglesia San Miguel Arcángel",
+  party_venue: "Centro de eventos Espacio Chacabuco",
+  // Inicio de la celebración y apertura de puertas del salón
+  party_start_time: "19:00 hrs",
   party_entry_time: "18:40 hrs",
+  // Invitados que ya hicieron su regalo: no ven la "Lluvia de amor"
+  gift_already_given: ["Alexis Gonzalez", "Morella Espinoza"],
   party_address: "Chacabuco 389, Maipú, Región Metropolitana",
   google_maps_url:
     "https://www.google.com/maps/search/?api=1&query=Chacabuco+389%2C+Maip%C3%BA%2C+Regi%C3%B3n+Metropolitana",
@@ -36,6 +42,15 @@ export const settings: Settings = {
   // Video "save the date" (opcional). Vacío = se salta el video y abre la portada.
   save_the_date_url: "",
 };
+
+const normalizeName = (name: string) =>
+  name.normalize("NFD").replace(/[̀-ͯ]/g, "").trim().toLowerCase();
+
+/** true si el invitado ya hizo su regalo (se compara sin tildes ni mayúsculas) */
+export function hasGivenGift(displayName: string, list = settings.gift_already_given) {
+  const name = normalizeName(displayName);
+  return list.some((n) => normalizeName(n) === name);
+}
 
 export function formatWeddingDate(date = settings.wedding_date) {
   return new Intl.DateTimeFormat("es-CL", {

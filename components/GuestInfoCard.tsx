@@ -20,6 +20,7 @@ import type { Guest, Settings } from "@/lib/types";
 type GuestInfoCardProps = {
   guest: Guest;
   settings: Settings;
+  hideGifts?: boolean;
   isOpen: boolean;
   onClose: () => void;
 };
@@ -51,7 +52,7 @@ function InfoBlock({ icon, title, children }: { icon: ReactNode; title: string; 
   );
 }
 
-export function GuestInfoCard({ guest, settings, isOpen, onClose }: GuestInfoCardProps) {
+export function GuestInfoCard({ guest, settings, hideGifts = false, isOpen, onClose }: GuestInfoCardProps) {
   const [message, setMessage] = useState(guest.message ?? "");
   const [savedMessage, setSavedMessage] = useState(guest.message ?? "");
   const [sending, setSending] = useState(false);
@@ -62,14 +63,14 @@ export function GuestInfoCard({ guest, settings, isOpen, onClose }: GuestInfoCar
 
   const places = [
     {
-      label: "Ceremonia",
+      label: `Ceremonia: ${settings.ceremony_venue}`,
       time: settings.ceremony_time,
       address: settings.ceremony_address,
       maps: settings.ceremony_google_maps_url,
     },
     {
-      label: "Celebración",
-      time: `Entrada desde las ${settings.party_entry_time}`,
+      label: `Celebración: ${settings.party_venue}`,
+      time: `Inicio ${settings.party_start_time} · Puertas abiertas desde las ${settings.party_entry_time}`,
       address: settings.party_address,
       maps: settings.google_maps_url,
     },
@@ -140,6 +141,10 @@ export function GuestInfoCard({ guest, settings, isOpen, onClose }: GuestInfoCar
                 Gracias de corazón por acompañarnos. Que estés con nosotros hace este día
                 todavía más especial.
               </p>
+              <p className="mt-3 text-xs leading-5 text-[#A39F88]">
+                Desliza hasta el final de la información: allí encontrarás un espacio para
+                dejarnos un mensaje 💌
+              </p>
             </div>
 
             {/* Cuerpo marfil — scrollable */}
@@ -168,11 +173,12 @@ export function GuestInfoCard({ guest, settings, isOpen, onClose }: GuestInfoCar
               <InfoBlock icon={<Clock size={16} />} title="Horario de llegada">
                 <div className="rounded-2xl border border-[#154D35]/25 bg-[#154D35]/6 p-4">
                   <p>
+                    La celebración comienza a las <strong>{settings.party_start_time}</strong>.
                     Si no nos acompañas en la ceremonia, te pedimos{" "}
-                    <strong>llegar a la celebración con 20 minutos de anticipación</strong>.
+                    <strong>llegar con 20 minutos de anticipación</strong>.
                   </p>
                   <p className="mt-2">
-                    La entrada al salón comienza a partir de las{" "}
+                    El salón abre sus puertas para el ingreso de los invitados a partir de las{" "}
                     <strong>{settings.party_entry_time}</strong>.
                   </p>
                 </div>
@@ -200,13 +206,15 @@ export function GuestInfoCard({ guest, settings, isOpen, onClose }: GuestInfoCar
                 </p>
               </InfoBlock>
 
-              <InfoBlock icon={<Gift size={16} />} title="Lluvia de amor">
-                <p className="mb-2">
-                  Tu presencia es lo que más nos importa. Pero si deseas tener un detalle especial
-                  con nosotros, puedes hacerlo así:
-                </p>
-                <GiftDetails settings={settings} />
-              </InfoBlock>
+              {!hideGifts && (
+                <InfoBlock icon={<Gift size={16} />} title="Lluvia de amor">
+                  <p className="mb-2">
+                    Tu presencia es lo que más nos importa. Pero si deseas tener un detalle especial
+                    con nosotros, puedes hacerlo así:
+                  </p>
+                  <GiftDetails settings={settings} />
+                </InfoBlock>
+              )}
 
               <InfoBlock icon={<MessageSquareHeart size={16} />} title="Un mensaje para los novios">
                 <p>

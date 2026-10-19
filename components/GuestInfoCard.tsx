@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
+import { Countdown } from "./Countdown";
 import { GiftDetails } from "./GiftDetails";
 import type { Guest, Settings } from "@/lib/types";
 
@@ -24,19 +25,6 @@ type GuestInfoCardProps = {
   isOpen: boolean;
   onClose: () => void;
 };
-
-// Días de calendario (hora de Chile) entre hoy y la boda
-function daysUntil(target: string) {
-  const day = (d: Date) =>
-    Date.parse(d.toLocaleDateString("en-CA", { timeZone: "America/Santiago" }));
-  return Math.round((day(new Date(target)) - day(new Date())) / 86_400_000);
-}
-
-function countdownLabel(days: number) {
-  if (days <= 0) return "¡Hoy es el gran día!";
-  if (days === 1) return "¡Mañana es el gran día!";
-  return `¡Faltan ${days} días para el gran día!`;
-}
 
 function InfoBlock({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
   return (
@@ -59,7 +47,6 @@ export function GuestInfoCard({ guest, settings, hideGifts = false, isOpen, onCl
   const [error, setError] = useState("");
   const [justSaved, setJustSaved] = useState(false);
 
-  const days = daysUntil(settings.wedding_date);
 
   const places = [
     {
@@ -114,28 +101,35 @@ export function GuestInfoCard({ guest, settings, hideGifts = false, isOpen, onCl
         >
           <motion.div
             animate={{ y: 0, opacity: 1, scale: 1 }}
-            className="flex max-h-[calc(100dvh-3rem)] w-full max-w-lg flex-col overflow-hidden rounded-[1.75rem] shadow-2xl"
+            className="relative flex max-h-[calc(100dvh-3rem)] w-full max-w-lg flex-col overflow-hidden rounded-[1.75rem] shadow-2xl"
             exit={{ y: 20, opacity: 0, scale: 0.96 }}
             initial={{ y: 20, opacity: 0, scale: 0.96 }}
             onClick={(e) => e.stopPropagation()}
             transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
           >
+            {/* X siempre visible, fuera del área que se desplaza */}
+            <button
+              aria-label="Cerrar"
+              className="absolute right-4 top-4 z-10 grid h-9 w-9 place-items-center rounded-full bg-[#0C1D0E]/45 text-[#F7F3EA] backdrop-blur-sm transition hover:bg-[#0C1D0E]/70"
+              onClick={onClose}
+              type="button"
+            >
+              <X size={17} />
+            </button>
+
+            {/* Todo el contenido (header incluido) se desplaza junto */}
+            <div className="flex-1 overflow-y-auto bg-[#F7F3EA]">
             {/* Header verde con cuenta regresiva y agradecimiento */}
-            <div className="relative flex-shrink-0 bg-[#154D35] px-7 pb-6 pt-7 text-center">
-              <button
-                aria-label="Cerrar"
-                className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-[#F7F3EA]/12 text-[#F7F3EA] transition hover:bg-[#F7F3EA]/25"
-                onClick={onClose}
-                type="button"
-              >
-                <X size={17} />
-              </button>
+            <div className="bg-[#154D35] px-7 pb-6 pt-7 text-center">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#A39F88]">
                 Hola, {guest.display_name}
               </p>
               <h3 className="font-display mt-2 text-2xl text-[#F7F3EA] sm:text-3xl">
-                {countdownLabel(days)}
+                ¡Falta muy poco para el gran día!
               </h3>
+              <div className="mx-auto mt-4 max-w-sm">
+                <Countdown target={settings.wedding_date} variant="compact" />
+              </div>
               <div className="gold-line mx-auto mt-4 w-24" />
               <p className="mt-4 text-sm leading-6 text-[#E2E5E2]">
                 Gracias de corazón por acompañarnos. Que estés con nosotros hace este día
@@ -147,8 +141,8 @@ export function GuestInfoCard({ guest, settings, hideGifts = false, isOpen, onCl
               </p>
             </div>
 
-            {/* Cuerpo marfil — scrollable */}
-            <div className="flex-1 divide-y divide-[#837E5E]/18 overflow-y-auto bg-[#F7F3EA] px-6 sm:px-7">
+            {/* Cuerpo marfil */}
+            <div className="divide-y divide-[#837E5E]/18 px-6 sm:px-7">
               <InfoBlock icon={<Map size={16} />} title="Dónde nos vemos">
                 <div className="grid gap-3 sm:grid-cols-2">
                   {places.map((p) => (
@@ -263,6 +257,7 @@ export function GuestInfoCard({ guest, settings, hideGifts = false, isOpen, onCl
                 <p className="font-script text-3xl text-[#837E5E]">Con amor</p>
                 <p className="font-script text-4xl text-[#154D35]">Zequelly y Elio</p>
               </div>
+            </div>
             </div>
           </motion.div>
         </motion.div>

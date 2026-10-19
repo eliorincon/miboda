@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 
 type CountdownProps = {
   target: string;
+  /** "compact": versión pequeña sobre fondo verde (tarjeta del invitado) */
+  variant?: "default" | "compact";
 };
 
 function getTimeParts(target: string) {
@@ -16,7 +18,7 @@ function getTimeParts(target: string) {
   };
 }
 
-export function Countdown({ target }: CountdownProps) {
+export function Countdown({ target, variant = "default" }: CountdownProps) {
   const [parts, setParts] = useState<ReturnType<typeof getTimeParts> | null>(null);
   const entries = useMemo(
     () =>
@@ -36,6 +38,26 @@ export function Countdown({ target }: CountdownProps) {
       window.clearInterval(timer);
     };
   }, [target]);
+
+  if (variant === "compact") {
+    return (
+      <div className="grid grid-cols-4 gap-2">
+        {entries.map(([label, value]) => (
+          <div
+            className="rounded-xl border border-[#F7F3EA]/18 bg-[#0C1D0E]/25 px-1 py-2.5 text-center"
+            key={label}
+          >
+            <p className="font-display text-2xl tabular-nums text-[#F7F3EA] sm:text-3xl">
+              {typeof value === "number" ? String(value).padStart(2, "0") : "--"}
+            </p>
+            <p className="mt-0.5 text-[0.6rem] font-semibold uppercase tracking-wider text-[#A39F88]">
+              {label}
+            </p>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">

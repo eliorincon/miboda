@@ -10,6 +10,8 @@ export const settings: Settings = {
   ceremony_address: "Av. José Miguel Carrera 3520, Paradero 6, San Miguel",
   party_place: "Full Party",
   party_time: "19:00 a 02:00 hrs",
+  // Hora desde la que se abre la entrada al salón
+  party_entry_time: "18:40 hrs",
   party_address: "Chacabuco 389, Maipú, Región Metropolitana",
   google_maps_url:
     "https://www.google.com/maps/search/?api=1&query=Chacabuco+389%2C+Maip%C3%BA%2C+Regi%C3%B3n+Metropolitana",

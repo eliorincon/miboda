@@ -1,11 +1,12 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, Heart, MailCheck, Sparkles } from "lucide-react";
+import { ArrowLeft, Heart, MailCheck, ScrollText, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Countdown } from "./Countdown";
 import { Footer } from "./Footer";
 import { GiftModal } from "./GiftModal";
+import { GuestInfoCard } from "./GuestInfoCard";
 import { InfoPopup } from "./InfoPopup";
 import { IntroScreen } from "./IntroScreen";
 import { MapButtons } from "./MapButtons";
@@ -56,6 +57,9 @@ export function HomeClient({ settings, dateLabel, guest = null }: HomeClientProp
   );
   const [activeSlide, setActiveSlide] = useState(0);
   const [rsvpOpen, setRsvpOpen] = useState(false);
+  // Tarjeta informativa del invitado: se abre sola la primera vez que entra
+  const [infoOpen, setInfoOpen] = useState(false);
+  const infoShown = useRef(false);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
@@ -86,6 +90,13 @@ export function HomeClient({ settings, dateLabel, guest = null }: HomeClientProp
     }, 4000);
     return () => window.clearInterval(timer);
   }, [entered]);
+
+  useEffect(() => {
+    if (!entered || !guest || infoShown.current) return;
+    infoShown.current = true;
+    const timer = window.setTimeout(() => setInfoOpen(true), 900);
+    return () => window.clearTimeout(timer);
+  }, [entered, guest]);
 
   const slide = heroSlides[activeSlide];
 
@@ -139,8 +150,17 @@ export function HomeClient({ settings, dateLabel, guest = null }: HomeClientProp
 
       <MusicPlayer enabled={entered} src={settings.main_song_url} />
 
-      {/* RSVP Modal */}
-      <RSVPModal guest={guest} isOpen={rsvpOpen} onClose={() => setRsvpOpen(false)} />
+      {/* Invitado: tarjeta informativa (ya confirmados). Sin invitado: RSVP */}
+      {guest ? (
+        <GuestInfoCard
+          guest={guest}
+          isOpen={infoOpen}
+          onClose={() => setInfoOpen(false)}
+          settings={settings}
+        />
+      ) : (
+        <RSVPModal guest={guest} isOpen={rsvpOpen} onClose={() => setRsvpOpen(false)} />
+      )}
 
       <main>
         {entered ? (
@@ -240,7 +260,7 @@ export function HomeClient({ settings, dateLabel, guest = null }: HomeClientProp
                     <span className="font-semibold">{guest.display_name}</span>
                     <span className="text-[#A39F88]">·</span>
                     <span className="text-[#A39F88]">
-                      {guest.max_guests === 1 ? "1 cupo reservado" : `${guest.max_guests} cupos reservados`}
+                      {guest.max_guests === 1 ? "1 cupo confirmado" : `${guest.max_guests} cupos confirmados`}
                     </span>
                   </motion.div>
                 )}
@@ -300,33 +320,60 @@ export function HomeClient({ settings, dateLabel, guest = null }: HomeClientProp
                 <div className="mx-auto mb-5 grid h-12 w-12 place-items-center rounded-full border border-[#F7F3EA]/30 bg-[#F7F3EA]/10">
                   <Heart className="text-[#F7F3EA]" size={20} strokeWidth={1.4} />
                 </div>
-                <p className="responsive-kicker text-xs font-semibold uppercase text-[#A39F88]">
-                  Nos encantaría contar contigo
-                </p>
-                <div className="gold-line mx-auto mt-4 w-28" />
-                <h2 className="font-display mt-6 text-3xl text-[#F7F3EA] sm:text-4xl">
-                  Confirma tu asistencia
-                </h2>
-                <p className="hero-copy text-pretty mx-auto mt-5 max-w-lg text-center leading-8 text-[#E2E5E2] sm:leading-9">
-                  Tu presencia significa muchísimo para nosotros. Para preparar cada detalle con cariño,
-                  te pedimos confirmar antes del{" "}
-                  <span className="font-semibold text-[#F7F3EA]">
-                    {new Date(settings.rsvp_deadline).toLocaleDateString("es-CL", {
-                      day: "numeric",
-                      month: "long",
-                      timeZone: "America/Santiago",
-                    })}
-                  </span>.
-                </p>
-                <div className="gold-line mx-auto mt-7 w-16" />
-                <button
-                  className="focus-ring mt-8 inline-flex items-center gap-2.5 rounded-full bg-[#F7F3EA] px-7 py-4 font-semibold text-[#0C1D0E] shadow-xl transition hover:bg-[#E2E5E2] hover:scale-[1.02]"
-                  onClick={() => setRsvpOpen(true)}
-                  type="button"
-                >
-                  <MailCheck size={18} />
-                  Confirmar asistencia
-                </button>
+                {guest ? (
+                  <>
+                    <p className="responsive-kicker text-xs font-semibold uppercase text-[#A39F88]">
+                      Gracias por acompañarnos
+                    </p>
+                    <div className="gold-line mx-auto mt-4 w-28" />
+                    <h2 className="font-display mt-6 text-3xl text-[#F7F3EA] sm:text-4xl">
+                      Todo para el gran día
+                    </h2>
+                    <p className="hero-copy text-pretty mx-auto mt-5 max-w-lg text-center leading-8 text-[#E2E5E2] sm:leading-9">
+                      Horarios, ubicaciones, dress code, lluvia de amor y un espacio para dejarnos
+                      un mensaje que veremos en las pantallas del salón.
+                    </p>
+                    <div className="gold-line mx-auto mt-7 w-16" />
+                    <button
+                      className="focus-ring mt-8 inline-flex items-center gap-2.5 rounded-full bg-[#F7F3EA] px-7 py-4 font-semibold text-[#0C1D0E] shadow-xl transition hover:bg-[#E2E5E2] hover:scale-[1.02]"
+                      onClick={() => setInfoOpen(true)}
+                      type="button"
+                    >
+                      <ScrollText size={18} />
+                      Ver información y dejar mi mensaje
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <p className="responsive-kicker text-xs font-semibold uppercase text-[#A39F88]">
+                      Nos encantaría contar contigo
+                    </p>
+                    <div className="gold-line mx-auto mt-4 w-28" />
+                    <h2 className="font-display mt-6 text-3xl text-[#F7F3EA] sm:text-4xl">
+                      Confirma tu asistencia
+                    </h2>
+                    <p className="hero-copy text-pretty mx-auto mt-5 max-w-lg text-center leading-8 text-[#E2E5E2] sm:leading-9">
+                      Tu presencia significa muchísimo para nosotros. Para preparar cada detalle con cariño,
+                      te pedimos confirmar antes del{" "}
+                      <span className="font-semibold text-[#F7F3EA]">
+                        {new Date(settings.rsvp_deadline).toLocaleDateString("es-CL", {
+                          day: "numeric",
+                          month: "long",
+                          timeZone: "America/Santiago",
+                        })}
+                      </span>.
+                    </p>
+                    <div className="gold-line mx-auto mt-7 w-16" />
+                    <button
+                      className="focus-ring mt-8 inline-flex items-center gap-2.5 rounded-full bg-[#F7F3EA] px-7 py-4 font-semibold text-[#0C1D0E] shadow-xl transition hover:bg-[#E2E5E2] hover:scale-[1.02]"
+                      onClick={() => setRsvpOpen(true)}
+                      type="button"
+                    >
+                      <MailCheck size={18} />
+                      Confirmar asistencia
+                    </button>
+                  </>
+                )}
               </div>
             </motion.div>
           </div>

@@ -16,6 +16,15 @@ export const rsvpSchema = z.object({
     .max(1000),
 });
 
+export const guestMessageSchema = z.object({
+  code: z.string().min(2),
+  message: z
+    .string()
+    .trim()
+    .min(3, "Escríbenos unas palabras para los novios 💛")
+    .max(1000, "El mensaje puede tener hasta 1000 caracteres"),
+});
+
 export const createGuestSchema = z.object({
   display_name: z.string().min(2, "El nombre debe tener al menos 2 caracteres").max(120),
   phone: z.string().max(20).optional(),

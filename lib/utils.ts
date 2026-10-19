@@ -36,14 +36,15 @@ export function generateWhatsAppMessage(
   displayName: string,
   invitationUrl: string,
 ): string {
-  return `Con mucho cariño, Zequelly & Elio quieren invitar a *${displayName}* a celebrar su boda.
+  return `Hola *${displayName}* 💛
 
-Hemos preparado una invitación especial para ustedes:
+¡Ya falta muy poco para nuestra boda! Gracias de corazón por confirmar y acompañarnos en este día tan especial.
+
+En tu invitación personal encontrarás toda la información para el gran día: horarios, ubicaciones, dress code, la lluvia de amor y un espacio para dejarnos un mensaje que proyectaremos en las pantallas del salón durante la celebración ✨
 
 ${invitationUrl}
 
-Por favor confirmen su asistencia desde la invitación.
-
+¡Te esperamos!
 Con amor,
 Zequelly & Elio`;
 }

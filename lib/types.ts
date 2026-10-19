@@ -34,6 +34,7 @@ export type Settings = {
   ceremony_address: string;
   party_place: string;
   party_time: string;
+  party_entry_time: string;
   party_address: string;
   google_maps_url: string;
   waze_url: string;

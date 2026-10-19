@@ -5,9 +5,9 @@ import { MessageCircle, X } from "lucide-react";
 import { useState } from "react";
 
 const details = [
-  "Llegar 15 minutos antes de la hora indicada.",
-  "Confirmar asistencia antes de la fecha límite.",
-  "Respetar el dress code sugerido.",
+  "Si no nos acompañas en la ceremonia, llega a la celebración con 20 minutos de anticipación. La entrada al salón comienza a las 18:40 hrs.",
+  "Respetar el dress code: elegante formal.",
+  "Con cariño, hemos pensado esta celebración como una noche solo para adultos.",
   "Evitar publicar fotos o videos antes de que los novios compartan los suyos.",
 ];
 

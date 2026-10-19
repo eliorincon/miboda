@@ -261,6 +261,30 @@ export async function markGuestOpened(code: string): Promise<void> {
   });
 }
 
+/** Guarda solo el mensaje para los novios (no toca la confirmación) */
+export async function saveGuestMessage(code: string, message: string): Promise<Guest> {
+  const guest = await getGuestByCode(code);
+  if (!guest) throw new Error("No encontramos esta invitación.");
+
+  const patch = { message, updated_at: ts() };
+
+  const supabase = createSupabaseAdminClient();
+  if (supabase) {
+    const { data, error } = await supabase
+      .from("guests")
+      .update(patch)
+      .eq("code", code)
+      .select("*")
+      .single();
+    if (error) throw new Error(error.message);
+    return data as Guest;
+  }
+
+  const updated = { ...guest, ...patch };
+  memoryGuests.set(code, updated);
+  return updated;
+}
+
 export async function updateGuestRsvp(input: RsvpInput): Promise<Guest> {
   const guest = await getGuestByCode(input.code);
   if (!guest) throw new Error("No encontramos esta invitación.");

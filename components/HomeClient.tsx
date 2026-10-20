@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, Camera, Heart, Images, Lock, MailCheck, ScrollText, Sparkles } from "lucide-react";
+import { ArrowLeft, Camera, Heart, Images, MailCheck, ScrollText, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Countdown } from "./Countdown";
 import { Footer } from "./Footer";
@@ -442,7 +442,7 @@ export function HomeClient({ settings, dateLabel, guest = null, hideGifts = fals
                 aquí las fotos que tomes durante la celebración.
               </p>
               <p className="flex items-center gap-2 rounded-full border border-[#837E5E]/55 px-4 py-2 text-sm text-[#E2E5E2]">
-                <Lock size={15} /> Solo nosotros podremos verlas
+                <Images size={15} /> Todos podremos verlas en la galería de la noche
               </p>
               <a
                 className="focus-ring responsive-action inline-flex w-full items-center justify-center gap-2.5 rounded-full bg-[#F7F3EA] px-6 text-base font-semibold text-[#0C1D0E] shadow-[0_18px_45px_rgba(0,0,0,0.28)]"

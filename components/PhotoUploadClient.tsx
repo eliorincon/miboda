@@ -9,7 +9,6 @@ import {
   ImagePlus,
   Images,
   Link2,
-  Lock,
   Mail,
   MessageCircle,
   Plus,
@@ -131,11 +130,21 @@ function IconBadge({ children }: { children: ReactNode }) {
   );
 }
 
-function PrivacyNote({ plural }: { plural: boolean }) {
+/** Aviso de que las fotos se ven en la galería abierta, con su enlace */
+function GalleryNote({ plural }: { plural: boolean }) {
   return (
-    <p className="flex items-center justify-center gap-2 text-[0.8rem] text-[#C9C5B2]">
-      <Lock size={15} /> Solo Zequelly y Elio podrán ver {plural ? "sus" : "tus"} fotos
-    </p>
+    <div className="flex flex-col items-center gap-1.5 text-center">
+      <p className="text-pretty text-[0.8rem] leading-5 text-[#C9C5B2]">
+        {plural ? "Las fotos que compartan" : "Las fotos que compartas"} se verán en la galería de la noche, junto a
+        las de todos los invitados.
+      </p>
+      <Link
+        className="focus-ring inline-flex min-h-10 items-center gap-2 rounded-full px-3 text-sm font-semibold text-[#F7F3EA] underline underline-offset-4"
+        href="/fotos/galeria"
+      >
+        <Images size={16} /> Ver la galería de la noche
+      </Link>
+    </div>
   );
 }
 
@@ -510,9 +519,14 @@ export function PhotoUploadClient(props: Props) {
           </div>
         </div>
         <div className="flex-1" />
-        <Link className={`${secondaryBtn} mt-8`} href={backHref}>
-          <ArrowLeft size={18} /> Volver a mi invitación
-        </Link>
+        <div className="mt-8 flex flex-col gap-3">
+          <Link className={secondaryBtn} href="/fotos/galeria">
+            <Images size={18} /> Ver la galería de la noche
+          </Link>
+          <Link className="focus-ring flex min-h-11 items-center justify-center gap-2 text-sm font-semibold text-[#E8E4D6]" href={backHref}>
+            <ArrowLeft size={16} /> Volver a mi invitación
+          </Link>
+        </div>
       </Shell>
     );
   }
@@ -542,6 +556,9 @@ export function PhotoUploadClient(props: Props) {
             <MessageCircle size={20} /> Escríbenos por WhatsApp
           </a>
         </div>
+        <Link className={`${primaryBtn} mt-4`} href="/fotos/galeria">
+          <Images size={20} /> Ver la galería de la noche
+        </Link>
       </Shell>
     );
   }
@@ -582,7 +599,7 @@ export function PhotoUploadClient(props: Props) {
         </form>
         <div className="flex-1" />
         <div className="mt-8">
-          <PrivacyNote plural={false} />
+          <GalleryNote plural={false} />
         </div>
       </Shell>
     );
@@ -638,8 +655,8 @@ export function PhotoUploadClient(props: Props) {
           <a className={primaryBtn} href={WHATSAPP_URL} rel="noreferrer" target="_blank">
             <MessageCircle size={20} /> Escribirnos por WhatsApp
           </a>
-          <Link className={secondaryBtn} href={backHref}>
-            Volver a la invitación
+          <Link className={secondaryBtn} href="/fotos/galeria">
+            <Images size={18} /> Ver la galería de la noche
           </Link>
         </div>
       </Shell>
@@ -691,8 +708,8 @@ export function PhotoUploadClient(props: Props) {
             <h1 className="font-display text-[2.1rem] leading-tight">Hola, {greetingName}</h1>
             <p className="text-pretty leading-7 text-[#E8E4D6]">
               {plural
-                ? "Cada foto que tomen será un recuerdo para siempre. Súbanlas aquí: solo nosotros podremos verlas."
-                : "Cada foto que tomes será un recuerdo para siempre. Súbelas aquí: solo nosotros podremos verlas."}
+                ? "Cada foto que tomen será un recuerdo para siempre. Súbanlas aquí y disfrútenlas en la galería de la noche."
+                : "Cada foto que tomes será un recuerdo para siempre. Súbela aquí y disfrútala en la galería de la noche."}
             </p>
           </div>
           {limit !== null && remaining !== null ? (
@@ -725,7 +742,7 @@ export function PhotoUploadClient(props: Props) {
               {plural ? "Tienen" : "Tienes"} hasta el lunes 2 de noviembre a las 23:59.
             </span>
           </div>
-          <PrivacyNote plural={plural} />
+          <GalleryNote plural={plural} />
         </div>
       </Shell>
     );
@@ -836,7 +853,7 @@ export function PhotoUploadClient(props: Props) {
           </div>
         ) : null}
         <div className="mt-2">
-          <PrivacyNote plural={plural} />
+          <GalleryNote plural={plural} />
         </div>
       </div>
     </Shell>

@@ -397,6 +397,52 @@ export async function listPhotos(opts: { offset: number; limit: number; uploader
   return result;
 }
 
+// ─── Galería pública (invitados): solo ver, sin descargas ────────────────────
+
+export type PublicPhoto = {
+  id: string;
+  uploaderName: string;
+  createdAt: string;
+  width: number | null;
+  height: number | null;
+  thumbUrl: string | null;
+  photoUrl: string | null;
+};
+
+/** Fotos listas de los invitados (nunca las de prueba), más recientes primero */
+export async function listPublicPhotos(opts: { offset: number; limit: number }) {
+  const { data, count, error } = await db()
+    .from("photos")
+    .select("id, uploader_name, created_at, ready_at, width, height, storage_path, thumb_path", {
+      count: "exact",
+    })
+    .eq("status", "ready")
+    .neq("access_mode", "admin")
+    .order("created_at", { ascending: false })
+    .range(opts.offset, opts.offset + opts.limit - 1);
+  if (error) throw new PhotoError("No pudimos cargar la galería. Intenta de nuevo.", 500);
+
+  const rows = data ?? [];
+  const urls = await signMany(
+    rows.flatMap((r) => [r.thumb_path, r.storage_path]),
+    READ_URL_SECONDS,
+  );
+  return {
+    total: count ?? 0,
+    photos: rows.map(
+      (r): PublicPhoto => ({
+        id: r.id,
+        uploaderName: r.uploader_name,
+        createdAt: r.ready_at ?? r.created_at,
+        width: r.width,
+        height: r.height,
+        thumbUrl: urls.get(r.thumb_path) ?? null,
+        photoUrl: urls.get(r.storage_path) ?? null,
+      }),
+    ),
+  };
+}
+
 async function removeObjects(paths: string[]) {
   const storage = bucket();
   for (let i = 0; i < paths.length; i += 100) {

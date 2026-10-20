@@ -337,6 +337,14 @@ export function AdminPhotoGallery() {
             <Link className="admin-btn-outline flex min-h-11 items-center gap-1.5" href="/admin">
               <ArrowLeft size={15} /> Volver a invitados
             </Link>
+            <a
+              className="admin-btn-outline flex min-h-11 items-center gap-1.5"
+              href="/fotos/galeria"
+              rel="noreferrer"
+              target="_blank"
+            >
+              <Camera size={15} /> Ver galería de invitados
+            </a>
             <button
               className="admin-btn-primary flex min-h-11 items-center gap-1.5 disabled:opacity-60"
               disabled={!summary?.total || Boolean(zip)}

@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  Camera,
   Check,
   ChevronDown,
   ClipboardCopy,
@@ -469,6 +470,12 @@ export function AdminDashboard({ guests: initialGuests, siteUrl }: Props) {
             </h1>
           </div>
           <div className="flex flex-wrap gap-2">
+            <a
+              className="admin-btn-outline flex items-center gap-1.5"
+              href="/admin/fotos"
+            >
+              <Camera size={15} /> Fotos de la noche
+            </a>
             <button
               className="admin-btn-outline flex items-center gap-1.5"
               onClick={() => setImportOpen(true)}

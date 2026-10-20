@@ -72,6 +72,34 @@ export const importRowSchema = z.object({
   members: z.string().optional().default(""),
 });
 
+// ─── Galería de fotos ────────────────────────────────────────────────────────
+// El acceso puede venir del link personal (code), del QR (k + nombre) o de la
+// cookie de admin; por eso aquí todo es opcional y la ruta decide.
+export const photoAccessSchema = z.object({
+  code: z.string().trim().min(2).max(120).optional(),
+  k: z.string().trim().min(4).max(64).optional(),
+  uploaderName: z.string().trim().min(2, "Cuéntanos tu nombre (mínimo 2 letras)").max(60).optional(),
+  simular: z.enum(["before", "open", "after", "limite"]).optional(),
+});
+
+export const photoMimeTypes = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"] as const;
+
+export const photoUploadUrlSchema = photoAccessSchema.extend({
+  contentType: z.enum(photoMimeTypes),
+  size: z.number().int().positive().max(15 * 1024 * 1024),
+  thumbSize: z.number().int().positive().max(1024 * 1024),
+});
+
+export const photoCompleteSchema = photoAccessSchema.extend({
+  photoId: z.string().uuid(),
+  width: z.number().int().positive().max(20000).optional(),
+  height: z.number().int().positive().max(20000).optional(),
+});
+
+export type PhotoAccessInput = z.output<typeof photoAccessSchema>;
+export type PhotoUploadUrlInput = z.output<typeof photoUploadUrlSchema>;
+export type PhotoCompleteInput = z.output<typeof photoCompleteSchema>;
+
 export type RsvpInput = z.output<typeof rsvpSchema>;
 export type RsvpFormInput = z.input<typeof rsvpSchema>;
 export type CreateGuestInput = z.output<typeof createGuestSchema>;

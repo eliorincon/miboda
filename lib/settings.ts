@@ -41,7 +41,30 @@ export const settings: Settings = {
   mercadopago_link_100k: "https://mpago.la/2aWJk5T",
   // Video "save the date" (opcional). Vacío = se salta el video y abre la portada.
   save_the_date_url: "",
+  // ─── Galería "Nuestra noche en fotos" ───────────────────────────────────
+  // La clave del QR NO va aquí (este objeto llega al navegador): vive en la
+  // variable de entorno PHOTOS_EVENT_KEY, solo en el servidor.
+  photos_enabled: true,
+  // Sección "Subir mis fotos" en la invitación personal (se activa tras probar)
+  photos_show_in_invitation: false,
+  photos_open_from: "2026-10-31T18:00:00-03:00",
+  photos_open_until: "2026-11-02T23:59:00-03:00",
+  // Por persona; en una invitación personal se multiplica por sus cupos
+  photos_max_per_uploader: 30,
+  photos_max_total_bytes: 900 * 1024 * 1024,
+  photos_bucket: "wedding-photos",
 };
+
+export type PhotoWindowState = "disabled" | "before" | "open" | "after";
+
+export function getPhotoWindowState(now = new Date(), toleranceMinutes = 0): PhotoWindowState {
+  if (!settings.photos_enabled) return "disabled";
+  const t = now.getTime();
+  if (t < new Date(settings.photos_open_from).getTime()) return "before";
+  const until = new Date(settings.photos_open_until).getTime() + toleranceMinutes * 60_000;
+  if (t > until) return "after";
+  return "open";
+}
 
 const normalizeName = (name: string) =>
   name.normalize("NFD").replace(/[̀-ͯ]/g, "").trim().toLowerCase();

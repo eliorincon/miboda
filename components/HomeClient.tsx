@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, Heart, MailCheck, ScrollText, Sparkles } from "lucide-react";
+import { ArrowLeft, Camera, Heart, Images, Lock, MailCheck, ScrollText, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Countdown } from "./Countdown";
 import { Footer } from "./Footer";
@@ -430,6 +430,29 @@ export function HomeClient({ settings, dateLabel, guest = null, hideGifts = fals
           </p>
           <SpotifyPlaylist url={settings.spotify_playlist_url} />
         </Section>
+
+        {guest && settings.photos_show_in_invitation ? (
+          <Section eyebrow="Nuestra noche en fotos" title="Comparte tus recuerdos con nosotros">
+            <div className="glass-panel mx-auto flex max-w-md flex-col items-center gap-5 rounded-3xl px-6 py-7 text-center">
+              <div className="gift-card-icon">
+                <Camera size={24} strokeWidth={1.6} />
+              </div>
+              <p className="leading-7 text-[#E2E5E2]">
+                Desde el sábado 31 de octubre a las 18:00 hrs y hasta el lunes 2 de noviembre, podrás subir
+                aquí las fotos que tomes durante la celebración.
+              </p>
+              <p className="flex items-center gap-2 rounded-full border border-[#837E5E]/55 px-4 py-2 text-sm text-[#E2E5E2]">
+                <Lock size={15} /> Solo nosotros podremos verlas
+              </p>
+              <a
+                className="focus-ring responsive-action inline-flex w-full items-center justify-center gap-2.5 rounded-full bg-[#F7F3EA] px-6 text-base font-semibold text-[#0C1D0E] shadow-[0_18px_45px_rgba(0,0,0,0.28)]"
+                href={`/fotos?code=${encodeURIComponent(guest.code)}`}
+              >
+                <Images size={20} /> Subir mis fotos
+              </a>
+            </div>
+          </Section>
+        ) : null}
 
         <Footer />
       </main>

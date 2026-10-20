@@ -43,3 +43,6 @@ create policy "service role full access"
   to service_role
   using (true)
   with check (true);
+
+
+-- Galería de fotos de los invitados: ver supabase/photos.sql (ejecutarlo por separado).

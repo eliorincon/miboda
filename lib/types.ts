@@ -57,4 +57,49 @@ export type Settings = {
   mercadopago_link_50k: string;
   mercadopago_link_100k: string;
   save_the_date_url: string;
+  // Galería de fotos de los invitados
+  photos_enabled: boolean;
+  photos_show_in_invitation: boolean;
+  photos_open_from: string;
+  photos_open_until: string;
+  photos_max_per_uploader: number;
+  photos_max_total_bytes: number;
+  photos_bucket: string;
 };
+
+export type PhotoAccessMode = "guest" | "qr" | "admin";
+export type PhotoStatus = "pending" | "ready";
+
+export type Photo = {
+  id: string;
+  guest_id: string | null;
+  uploader_name: string;
+  uploader_key: string;
+  access_mode: PhotoAccessMode;
+  status: PhotoStatus;
+  storage_path: string;
+  thumb_path: string;
+  content_type: string;
+  size_bytes: number;
+  thumb_size_bytes: number;
+  width: number | null;
+  height: number | null;
+  taken_at: string | null;
+  created_at: string;
+  ready_at: string | null;
+};
+
+/** Foto lista para el panel de los novios, con URLs firmadas temporales */
+export type AdminPhoto = {
+  id: string;
+  uploaderName: string;
+  accessMode: PhotoAccessMode;
+  createdAt: string;
+  width: number | null;
+  height: number | null;
+  sizeBytes: number;
+  thumbUrl: string | null;
+  photoUrl: string | null;
+};
+
+export type PhotoUploaderCount = { name: string; count: number };

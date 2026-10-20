@@ -23,7 +23,7 @@ import { AnimatePresence, motion, MotionConfig, useReducedMotion } from "framer-
 import Link from "next/link";
 import { type FormEvent, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Countdown } from "./Countdown";
-import { PhotoTabBar } from "./PhotoTabBar";
+import { GUEST_CODE_STORAGE_KEY, PhotoTabBar } from "./PhotoTabBar";
 import { detectImageType, isImageFile, preparePhoto, type PreparedPhoto } from "@/lib/photo-prepare";
 import type { PhotoWindowState } from "@/lib/settings";
 import { createSupabaseBrowserClient } from "@/lib/supabase";
@@ -246,6 +246,8 @@ export function PhotoUploadClient(props: Props) {
   const [nameConfirmed, setNameConfirmed] = useState(mode !== "qr");
   const [nameError, setNameError] = useState<string | null>(null);
   const [checkingName, setCheckingName] = useState(false);
+  // Mientras se revisa si este celular ya recuerda el nombre (modo QR)
+  const [restoring, setRestoring] = useState(mode === "qr");
   const [remaining, setRemaining] = useState<number | null>(props.initialRemaining);
   const [limit, setLimit] = useState<number | null>(props.limit);
   const [items, setItems] = useState<Item[]>([]);
@@ -276,16 +278,78 @@ export function PhotoUploadClient(props: Props) {
     return () => timers.forEach((t) => window.clearTimeout(t));
   }, [isAdminTest, props.serverNow, props.opensAt, props.closesAt]);
 
-  // ── Nombre recordado (modo QR)
+  /** Consulta el cupo de esta persona y la deja lista para subir */
+  const checkName = useCallback(
+    async (clean: string) => {
+      nameRef.current = clean;
+      const res = await fetch("/api/photos/status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uploaderName: clean, simular: simular ?? undefined }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || "Parece que la señal está débil. Intenta de nuevo.");
+      setRemaining(data.remaining ?? null);
+      setLimit(data.limit ?? null);
+      setName(clean);
+      setNameConfirmed(true);
+      try {
+        window.localStorage.setItem(NAME_STORAGE_KEY, clean);
+      } catch {
+        // sin almacenamiento: no pasa nada
+      }
+    },
+    [simular],
+  );
+
+  // ── Nombre recordado (modo QR): si ya lo dio antes, entra directo a subir
   useEffect(() => {
     if (mode !== "qr") return;
+    let alive = true;
+    void (async () => {
+      await Promise.resolve();
+      let saved = "";
+      try {
+        saved = (window.localStorage.getItem(NAME_STORAGE_KEY) ?? "").trim().replace(/\s+/g, " ");
+      } catch {
+        // sin almacenamiento disponible: se pedirá el nombre
+      }
+      if (saved.length >= 2 && saved.length <= 60) {
+        try {
+          await checkName(saved);
+        } catch {
+          // sin señal: se muestra el formulario con el nombre ya escrito
+          if (alive) setName(saved);
+        }
+      }
+      if (alive) setRestoring(false);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [mode, checkName]);
+
+  // ── Link personal: recordarlo para volver aquí desde la galería
+  useEffect(() => {
+    if (mode !== "guest" || !props.code) return;
     try {
-      const saved = window.localStorage.getItem(NAME_STORAGE_KEY);
-      if (saved) window.setTimeout(() => setName(saved), 0);
+      window.localStorage.setItem(GUEST_CODE_STORAGE_KEY, props.code);
     } catch {
-      // sin almacenamiento disponible: se pedirá el nombre
+      // sin almacenamiento: no pasa nada
     }
-  }, [mode]);
+  }, [mode, props.code]);
+
+  function changeName() {
+    try {
+      window.localStorage.removeItem(NAME_STORAGE_KEY);
+    } catch {
+      // sin almacenamiento: no pasa nada
+    }
+    nameRef.current = "";
+    setName("");
+    setNameError(null);
+    setNameConfirmed(false);
+  }
 
   const updateItem = useCallback((id: string, patch: Partial<Item>) => {
     itemsRef.current = itemsRef.current.map((it) => (it.id === id ? { ...it, ...patch } : it));
@@ -494,23 +558,7 @@ export function PhotoUploadClient(props: Props) {
     setCheckingName(true);
     setNameError(null);
     try {
-      nameRef.current = clean;
-      const res = await fetch("/api/photos/status", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ uploaderName: clean, simular: simular ?? undefined }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || "Parece que la señal está débil. Intenta de nuevo.");
-      setRemaining(data.remaining ?? null);
-      setLimit(data.limit ?? null);
-      setName(clean);
-      setNameConfirmed(true);
-      try {
-        window.localStorage.setItem(NAME_STORAGE_KEY, clean);
-      } catch {
-        // sin almacenamiento: no pasa nada
-      }
+      await checkName(clean);
     } catch (err) {
       setNameError(err instanceof Error ? err.message : "Intenta de nuevo, por favor.");
     } finally {
@@ -618,6 +666,18 @@ export function PhotoUploadClient(props: Props) {
         <Link className={`${primaryBtn} mt-4`} href="/fotos/galeria">
           <Images size={20} /> Ver la galería de la noche
         </Link>
+      </Shell>
+    );
+  }
+
+  if (mode === "qr" && restoring) {
+    return (
+      <Shell isAdminTest={isAdminTest} shareHref={shareHref} simular={simular}>
+        <Brand />
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
+          <span className="h-8 w-8 animate-spin rounded-full border-2 border-[#F7F3EA]/25 border-t-[#F7F3EA]" />
+          <p className="text-sm text-[#C9C5B2]">Preparando tu rincón de fotos…</p>
+        </div>
       </Shell>
     );
   }
@@ -766,6 +826,15 @@ export function PhotoUploadClient(props: Props) {
           <PhotoStack />
           <div className="flex flex-col gap-3.5">
             <h1 className="font-display text-[2.1rem] leading-tight">Hola, {greetingName}</h1>
+            {mode === "qr" ? (
+              <button
+                className="focus-ring -mt-2 self-center rounded-full px-3 py-1 text-[0.8rem] text-[#C9C5B2] underline underline-offset-4"
+                onClick={changeName}
+                type="button"
+              >
+                ¿No eres {greetingName}? Cambiar nombre
+              </button>
+            ) : null}
             <p className="text-pretty leading-7 text-[#E8E4D6]">
               {plural
                 ? "Cada foto que tomen será un recuerdo para siempre. Súbanlas aquí y disfrútenlas en la galería de la noche."
@@ -816,7 +885,18 @@ export function PhotoUploadClient(props: Props) {
       {fileInputs}
       <div className="flex items-center justify-between">
         <p className="gold-text font-script text-[1.9rem] leading-none">Zequelly &amp; Elio</p>
-        <p className="max-w-[55%] truncate text-[0.8rem] text-[#C9C5B2]">{greetingName}</p>
+        {mode === "qr" && !busy ? (
+          <button
+            className="focus-ring max-w-[55%] truncate rounded-full px-2 py-1 text-[0.8rem] text-[#C9C5B2] underline underline-offset-4"
+            onClick={changeName}
+            title="Cambiar nombre"
+            type="button"
+          >
+            {greetingName} · cambiar
+          </button>
+        ) : (
+          <p className="max-w-[55%] truncate text-[0.8rem] text-[#C9C5B2]">{greetingName}</p>
+        )}
       </div>
 
       <AnimatePresence mode="wait">

@@ -3,17 +3,33 @@
 import { motion } from "framer-motion";
 import { ImagePlus, Images } from "lucide-react";
 import Link from "next/link";
+import { useSyncExternalStore } from "react";
+
+/** Código de la invitación personal recordado en este celular (lo guarda /fotos?code=) */
+export const GUEST_CODE_STORAGE_KEY = "fotos-boda-code";
+
+const noSubscribe = () => () => {};
+function readStoredCode() {
+  try {
+    return window.localStorage.getItem(GUEST_CODE_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
 
 type Props = {
   active: "share" | "gallery";
-  /** Para mantener el link personal (?code=) al volver a "Compartir" */
+  /** Para mantener el link personal (?code=) al volver a "Subir fotos" */
   shareHref?: string;
 };
 
-/** Barra inferior tipo app: Compartir / Galería */
-export function PhotoTabBar({ active, shareHref = "/fotos" }: Props) {
+/** Barra inferior tipo app: Subir fotos / Galería */
+export function PhotoTabBar({ active, shareHref }: Props) {
+  // Desde la galería no viene el código en la URL: se usa el recordado en el celular
+  const storedCode = useSyncExternalStore(noSubscribe, readStoredCode, () => null);
+  const uploadHref = shareHref ?? (storedCode ? `/fotos?code=${encodeURIComponent(storedCode)}` : "/fotos");
   const tabs = [
-    { id: "share" as const, href: shareHref, label: "Compartir", Icon: ImagePlus },
+    { id: "share" as const, href: uploadHref, label: "Subir fotos", Icon: ImagePlus },
     { id: "gallery" as const, href: "/fotos/galeria", label: "Galería", Icon: Images },
   ];
   return (

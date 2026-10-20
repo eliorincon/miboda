@@ -771,7 +771,7 @@ export function PublicGallery({ isAdminPreview = false }: { isAdminPreview?: boo
               Desde el sábado 31 de octubre a las 18:00 hrs, aquí irán apareciendo los recuerdos de la celebración.
             </p>
             <Link className="btn-ivory focus-ring mt-1 flex min-h-12 items-center gap-2 rounded-full px-6 font-semibold" href="/fotos">
-              <ImagePlus size={18} /> Compartir mis fotos
+              <ImagePlus size={18} /> Subir mis fotos
             </Link>
           </motion.div>
         ) : null}

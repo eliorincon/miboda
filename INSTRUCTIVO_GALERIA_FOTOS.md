@@ -3,6 +3,8 @@
 
 > **Para Claude Code:** este documento es la especificación completa de una funcionalidad nueva para este proyecto. Léelo entero antes de escribir código. Respeta las decisiones ya tomadas (sección 2): no las cambies ni las "mejores" sin preguntar. Si algo no está cubierto, elige lo más simple y coherente con el código existente y dilo al terminar.
 
+**Versión 3 · 20-10-2026 — acceso abierto (implementado).** Por decisión de los novios (evento cerrado), `/fotos` está abierta para cualquier persona: **sin clave y sin necesidad de invitación**; solo se pide el nombre. El link personal `/fotos?code=...` sigue reconociendo la invitación (30 × cupos). Se mantienen la ventana horaria, 30 fotos por nombre y el tope de 900 MB. Todo lo que este documento dice sobre `PHOTOS_EVENT_KEY`, el parámetro `k` o la pantalla "enlace no válido" para el QR **queda obsoleto**: el código ya no lo usa (los enlaces antiguos con `?k=` siguen funcionando porque `k` se ignora). El QR general apunta a `https://elioyquelly.lat/fotos` y las tarjetas están en la carpeta `QR mesas/` (fuera del repositorio).
+
 **Versión 2 · 19-10-2026.** Cambios respecto de la v1:
 - La ventana de subida se amplía hasta el **lunes 2 de noviembre a las 23:59 hrs**.
 - Límite de **30 fotos por persona** (en una invitación: 30 × cupos) y nuevo **tope total de almacenamiento** (~900 MB).
@@ -41,7 +43,7 @@ Que los invitados puedan **subir desde su celular** las fotos que tomen durante 
 | Tope total | El servidor deja de aceptar fotos cuando el total guardado llega a **~900 MB** (margen bajo el 1 GB del plan Free). |
 | Tipo de archivo | **Solo fotos.** Nada de videos. |
 | Fuera de la ventana | Antes: mensaje de "pronto se abrirá". Después: mensaje de agradecimiento y subida cerrada. **El servidor debe rechazar** cualquier subida fuera de la ventana; no basta con ocultar el botón. |
-| Clave del QR | Vive en la variable de entorno **`PHOTOS_EVENT_KEY`** (solo servidor, **sin** prefijo `NEXT_PUBLIC_`). **Nunca** en `lib/settings.ts`. |
+| Acceso | **Abierto** (v3): cualquiera con el QR general entra a `/fotos` y solo indica su nombre. Ya no hay clave (`PHOTOS_EVENT_KEY` quedó sin uso). |
 | Pruebas | **Todas en producción**, en Vercel, con la sesión admin. No se prueba en local (ver sección 10). |
 
 ---
@@ -115,8 +117,9 @@ Hay **dos** formas válidas para invitados, más el modo prueba. La página debe
 - El servidor busca al invitado con `getGuestByCode`. Si existe, la foto queda asociada a su `guest_id` y su `display_name`. **No se le pide nombre.**
 - Desde la invitación personal (`HomeClient` con `guest`) se agrega un botón que lleva a esta URL (sección 7.11).
 
-### B) Con el QR de las mesas
-- URL: `/fotos?k=<clave-del-evento>`.
+### B) Con el QR de las mesas (acceso abierto desde la v3)
+- URL: `/fotos` (sin parámetros). **Obsoleto desde la v3:** la clave `k` descrita abajo ya no se usa.
+- URL original de la v2: `/fotos?k=<clave-del-evento>`.
 - La clave se lee **solo en el servidor** desde `process.env.PHOTOS_EVENT_KEY`. No es un secreto fuerte (va impresa en las mesas); solo evita que cualquiera que adivine `/fotos` suba cosas.
 - Comparar con `crypto.timingSafeEqual` (o comparación directa; no es crítico) y **nunca** devolver la clave al cliente salvo el mismo valor que ya vino en la URL.
 - Si `PHOTOS_EVENT_KEY` no está definida, el modo QR queda **desactivado** (pantalla de enlace no válido); el modo con link personal sigue funcionando.

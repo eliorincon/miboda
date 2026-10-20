@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isAdminAuthenticated } from "@/lib/auth";
 import { listPublicPhotos, photoErrorBody } from "@/lib/photos";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +11,9 @@ export async function GET(request: Request) {
   const limit = Math.min(60, Math.max(1, Number(searchParams.get("limit")) || 30));
 
   try {
-    return NextResponse.json(await listPublicPhotos({ offset, limit }), {
+    // Con la sesión de los novios se incluyen sus fotos de prueba (vista previa)
+    const includeTest = await isAdminAuthenticated();
+    return NextResponse.json(await listPublicPhotos({ offset, limit, includeTest }), {
       headers: { "Cache-Control": "no-store" },
     });
   } catch (e) {

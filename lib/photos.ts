@@ -409,15 +409,19 @@ export type PublicPhoto = {
   photoUrl: string | null;
 };
 
-/** Fotos listas de los invitados (nunca las de prueba), más recientes primero */
-export async function listPublicPhotos(opts: { offset: number; limit: number }) {
-  const { data, count, error } = await db()
+/**
+ * Fotos listas, más recientes primero. Las de prueba solo se incluyen para los
+ * novios (vista previa); los invitados nunca las ven.
+ */
+export async function listPublicPhotos(opts: { offset: number; limit: number; includeTest?: boolean }) {
+  let query = db()
     .from("photos")
     .select("id, uploader_name, created_at, ready_at, width, height, storage_path, thumb_path", {
       count: "exact",
     })
-    .eq("status", "ready")
-    .neq("access_mode", "admin")
+    .eq("status", "ready");
+  if (!opts.includeTest) query = query.neq("access_mode", "admin");
+  const { data, count, error } = await query
     .order("created_at", { ascending: false })
     .range(opts.offset, opts.offset + opts.limit - 1);
   if (error) throw new PhotoError("No pudimos cargar la galería. Intenta de nuevo.", 500);

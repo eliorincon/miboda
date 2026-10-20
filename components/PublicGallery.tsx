@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, ChevronLeft, ChevronRight, ImagePlus, X } from "lucide-react";
+import { Camera, ChevronLeft, ChevronRight, ImagePlus, ShieldCheck, X } from "lucide-react";
 import Link from "next/link";
 import { type CSSProperties, useCallback, useEffect, useRef, useState } from "react";
 
@@ -43,7 +43,7 @@ const bg = (url: string | null, size: "cover" | "contain"): CSSProperties =>
       }
     : {};
 
-export function PublicGallery() {
+export function PublicGallery({ isAdminPreview = false }: { isAdminPreview?: boolean }) {
   const [photos, setPhotos] = useState<PublicPhoto[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -122,6 +122,15 @@ export function PublicGallery() {
       onDragStart={(e) => e.preventDefault()}
       style={noSave}
     >
+      {isAdminPreview ? (
+        <div className="mb-5 flex items-start gap-2 rounded-xl bg-[#F7F3EA] px-3.5 py-2.5 text-[0.8rem] font-semibold leading-5 text-[#154D35]">
+          <ShieldCheck className="mt-0.5 shrink-0" size={16} />
+          <span>
+            Vista de los novios: aquí también ven sus fotos de prueba (marcadas con &quot;(prueba)&quot;). Los
+            invitados no las ven.
+          </span>
+        </div>
+      ) : null}
       <div className="flex flex-col items-center gap-0.5 text-center">
         <p className="font-script text-[2.1rem] leading-none text-[#A39F88]">Zequelly &amp; Elio</p>
         <p className="text-[0.68rem] font-semibold uppercase tracking-[0.3em] text-[#A39F88]">Nuestra noche en fotos</p>

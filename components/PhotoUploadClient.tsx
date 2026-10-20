@@ -32,7 +32,6 @@ type Props = {
   mode: PhotoPageMode;
   displayName: string;
   code: string | null;
-  eventKey: string | null;
   windowState: PhotoWindowState;
   opensAt: string;
   closesAt: string;
@@ -251,10 +250,9 @@ export function PhotoUploadClient(props: Props) {
 
   const accessPayload = useCallback(() => {
     if (mode === "guest") return { code: props.code ?? undefined, simular: simular ?? undefined };
-    if (mode === "qr")
-      return { k: props.eventKey ?? undefined, uploaderName: nameRef.current, simular: simular ?? undefined };
+    if (mode === "qr") return { uploaderName: nameRef.current, simular: simular ?? undefined };
     return { simular: simular ?? undefined };
-  }, [mode, props.code, props.eventKey, simular]);
+  }, [mode, props.code, simular]);
 
   async function postJson(url: string, body: unknown, { retryOn409 = false } = {}) {
     let res: Response;
@@ -432,7 +430,7 @@ export function PhotoUploadClient(props: Props) {
       const res = await fetch("/api/photos/status", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ k: props.eventKey, uploaderName: clean, simular: simular ?? undefined }),
+        body: JSON.stringify({ uploaderName: clean, simular: simular ?? undefined }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || "Parece que la señal está débil. Intenta de nuevo.");

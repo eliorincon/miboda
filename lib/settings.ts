@@ -42,8 +42,8 @@ export const settings: Settings = {
   // Video "save the date" (opcional). Vacío = se salta el video y abre la portada.
   save_the_date_url: "",
   // ─── Galería "Nuestra noche en fotos" ───────────────────────────────────
-  // La clave del QR NO va aquí (este objeto llega al navegador): vive en la
-  // variable de entorno PHOTOS_EVENT_KEY, solo en el servidor.
+  // Acceso abierto en /fotos (solo se pide el nombre); el link personal
+  // /fotos?code=... además reconoce la invitación.
   photos_enabled: true,
   // Sección "Subir mis fotos" en la invitación personal (se activa tras probar)
   photos_show_in_invitation: false,

@@ -1,6 +1,6 @@
 // Galería "Nuestra noche en fotos" — SOLO servidor.
 // Nunca importar este archivo desde componentes "use client".
-import { randomUUID, timingSafeEqual } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { getPhotoWindowState, settings } from "./settings";
 import { createSupabaseAdminClient } from "./supabase";
 import type { AdminPhoto, Photo, PhotoAccessMode, PhotoUploaderCount } from "./types";
@@ -34,18 +34,6 @@ function bucket() {
 }
 
 // ─── Acceso ──────────────────────────────────────────────────────────────────
-
-export function getPhotosEventKey(): string | null {
-  return process.env.PHOTOS_EVENT_KEY?.trim() || null;
-}
-
-export function isValidEventKey(k: string | undefined | null): boolean {
-  const key = getPhotosEventKey();
-  if (!key || !k) return false;
-  const a = Buffer.from(k.trim());
-  const b = Buffer.from(key);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
 
 export function normalizeUploaderName(name: string) {
   return name
@@ -83,8 +71,9 @@ async function findGuestByCode(code: string): Promise<GuestRow | null> {
 }
 
 /**
- * Resuelve quién está subiendo. Devuelve null si el enlace no es válido.
- * En modo QR sin nombre devuelve null: la página pide el nombre primero.
+ * Resuelve quién está subiendo. La galería es abierta (evento cerrado): con el
+ * link personal se usa la invitación; si no, basta el nombre. Sin ninguno de
+ * los dos devuelve null y la página pide el nombre primero.
  */
 export async function resolvePhotoAccess(
   input: PhotoAccessInput,
@@ -107,28 +96,18 @@ export async function resolvePhotoAccess(
         limit: perPerson * seats,
       };
     }
-  } else if (input.k) {
-    if (isValidEventKey(input.k) && input.uploaderName) {
-      const name = input.uploaderName.trim();
-      access = {
-        mode: "qr",
-        isTest: false,
-        guestId: null,
-        displayName: name,
-        seats: 1,
-        uploaderKey: `qr:${normalizeUploaderName(name)}`,
-        limit: perPerson,
-      };
-    }
-  } else if (isAdmin) {
+  }
+  if (!access && input.uploaderName) {
+    // Acceso abierto (QR general o /fotos directo): solo el nombre
+    const name = input.uploaderName.trim();
     access = {
-      mode: "admin",
-      isTest: true,
+      mode: "qr",
+      isTest: false,
       guestId: null,
-      displayName: "Novios",
+      displayName: name,
       seats: 1,
-      uploaderKey: "admin",
-      limit: Number.POSITIVE_INFINITY,
+      uploaderKey: `qr:${normalizeUploaderName(name)}`,
+      limit: perPerson,
     };
   }
 

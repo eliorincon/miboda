@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { PhotoUploadClient, type PhotoPageMode } from "@/components/PhotoUploadClient";
 import { isAdminAuthenticated } from "@/lib/auth";
-import { getRemaining, isValidEventKey, remainingForClient, resolvePhotoAccess } from "@/lib/photos";
+import { getRemaining, remainingForClient, resolvePhotoAccess } from "@/lib/photos";
 import { getPhotoWindowState, settings, type PhotoWindowState } from "@/lib/settings";
 import { photoAccessSchema } from "@/lib/validations";
 
@@ -25,9 +25,9 @@ function serverClock() {
 
 export default async function FotosPage({ searchParams }: FotosPageProps) {
   const params = await searchParams;
+  // `k` (clave de la versión anterior) ya no se usa: esos enlaces siguen funcionando
   const parsed = photoAccessSchema.safeParse({
     code: first(params.code) || undefined,
-    k: first(params.k) || undefined,
     simular: first(params.simular) || undefined,
   });
   const input = parsed.success ? parsed.data : {};
@@ -49,18 +49,10 @@ export default async function FotosPage({ searchParams }: FotosPageProps) {
         limit = access.limit;
         remaining = remainingForClient(await getRemaining(access));
       }
-    } else if (input.k) {
-      // Modo QR: el nombre se pide en la página y luego se consulta el cupo
-      if (isValidEventKey(input.k)) mode = "qr";
-    } else if (isAdmin) {
-      const access = await resolvePhotoAccess({ simular: input.simular }, isAdmin);
-      if (access) {
-        mode = "admin";
-        displayName = access.displayName;
-        limit = Number.isFinite(access.limit) ? access.limit : null;
-        remaining = remainingForClient(await getRemaining(access));
-      }
     }
+    // Acceso abierto: sin link personal válido, la página pide el nombre
+    // y luego consulta el cupo de esa persona.
+    if (mode === "invalid") mode = "qr";
   } catch {
     mode = "invalid";
   }
@@ -78,7 +70,6 @@ export default async function FotosPage({ searchParams }: FotosPageProps) {
       closesAt={settings.photos_open_until}
       code={mode === "guest" ? input.code ?? null : null}
       displayName={displayName}
-      eventKey={mode === "qr" ? input.k ?? null : null}
       initialRemaining={remaining}
       isAdminTest={isAdmin}
       limit={limit !== null && Number.isFinite(limit) ? limit : null}

@@ -3,6 +3,8 @@
 
 > **Para Claude Code:** este documento es la especificación completa de una funcionalidad nueva para este proyecto. Léelo entero antes de escribir código. Respeta las decisiones ya tomadas (sección 2): no las cambies ni las "mejores" sin preguntar. Si algo no está cubierto, elige lo más simple y coherente con el código existente y dilo al terminar.
 
+**Versión 4 · 20-10-2026 — galería pública (implementado).** Todos los invitados ven las fotos en `/fotos/galeria`: miniaturas y visor a pantalla completa, **sin descargas** (sin botón, fotos como fondo CSS, sin menú contextual, sin arrastre ni "Guardar imagen" al mantener presionado; un pantallazo no se puede impedir). Nunca muestra las fotos de prueba. Los textos "solo nosotros podremos verlas" se reemplazaron por avisos de que las fotos se verán en la galería; los novios moderan borrando desde `/admin/fotos`. Esto reemplaza la decisión "Quién ve las fotos" de la sección 2.
+
 **Versión 3 · 20-10-2026 — acceso abierto (implementado).** Por decisión de los novios (evento cerrado), `/fotos` está abierta para cualquier persona: **sin clave y sin necesidad de invitación**; solo se pide el nombre. El link personal `/fotos?code=...` sigue reconociendo la invitación (30 × cupos). Se mantienen la ventana horaria, 30 fotos por nombre y el tope de 900 MB. Todo lo que este documento dice sobre `PHOTOS_EVENT_KEY`, el parámetro `k` o la pantalla "enlace no válido" para el QR **queda obsoleto**: el código ya no lo usa (los enlaces antiguos con `?k=` siguen funcionando porque `k` se ignora). El QR general apunta a `https://elioyquelly.lat/fotos` y las tarjetas están en la carpeta `QR mesas/` (fuera del repositorio).
 
 **Versión 2 · 19-10-2026.** Cambios respecto de la v1:

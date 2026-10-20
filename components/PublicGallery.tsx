@@ -1,8 +1,9 @@
 "use client";
 
+import { AnimatePresence, motion, type PanInfo, useReducedMotion, type Variants } from "framer-motion";
 import { Camera, ChevronLeft, ChevronRight, ImagePlus, ShieldCheck, X } from "lucide-react";
 import Link from "next/link";
-import { type CSSProperties, useCallback, useEffect, useRef, useState } from "react";
+import { type CSSProperties, useCallback, useEffect, useState } from "react";
 
 type PublicPhoto = {
   id: string;
@@ -43,13 +44,29 @@ const bg = (url: string | null, size: "cover" | "contain"): CSSProperties =>
       }
     : {};
 
+// Dirección del cambio: 1 = siguiente, -1 = anterior, 0 = recién abierta
+const slideVariants: Variants = {
+  enter: (dir: number) =>
+    dir === 0 ? { x: 0, opacity: 0, scale: 0.9 } : { x: dir > 0 ? "100%" : "-100%", opacity: 1, scale: 1 },
+  center: { x: 0, opacity: 1, scale: 1 },
+  exit: (dir: number) =>
+    dir === 0 ? { x: 0, opacity: 0, scale: 0.96 } : { x: dir > 0 ? "-100%" : "100%", opacity: 1, scale: 1 },
+};
+const fadeVariants: Variants = {
+  enter: { opacity: 0 },
+  center: { opacity: 1 },
+  exit: { opacity: 0 },
+};
+const SWIPE_THRESHOLD = 80;
+
 export function PublicGallery({ isAdminPreview = false }: { isAdminPreview?: boolean }) {
   const [photos, setPhotos] = useState<PublicPhoto[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewer, setViewer] = useState<number | null>(null);
-  const touchStartX = useRef<number | null>(null);
+  const [direction, setDirection] = useState(0);
+  const reduceMotion = useReducedMotion();
 
   const fetchPage = useCallback(async (offset: number) => {
     const res = await fetch(`/api/photos/gallery?offset=${offset}&limit=${PAGE_SIZE}`, { cache: "no-store" });
@@ -88,14 +105,36 @@ export function PublicGallery({ isAdminPreview = false }: { isAdminPreview?: boo
   }
 
   const move = useCallback(
-    (delta: number) =>
+    (delta: number) => {
+      setDirection(delta);
       setViewer((v) => {
         if (v === null) return v;
         const next = v + delta;
         return next >= 0 && next < photos.length ? next : v;
-      }),
+      });
+    },
     [photos.length],
   );
+
+  function open(index: number) {
+    setDirection(0);
+    setViewer(index);
+  }
+
+  function onSwipeEnd(_: unknown, info: PanInfo) {
+    const swipe = info.offset.x + info.velocity.x * 0.2;
+    if (swipe < -SWIPE_THRESHOLD) move(1);
+    else if (swipe > SWIPE_THRESHOLD) move(-1);
+  }
+
+  // Precargar la anterior y la siguiente para que el deslizamiento no espere la descarga
+  useEffect(() => {
+    if (viewer === null) return;
+    for (const i of [viewer - 1, viewer + 1]) {
+      const url = photos[i]?.photoUrl;
+      if (url) new Image().src = url;
+    }
+  }, [viewer, photos]);
 
   useEffect(() => {
     if (viewer === null) return;
@@ -175,9 +214,9 @@ export function PublicGallery({ isAdminPreview = false }: { isAdminPreview?: boo
         {photos.map((p, i) => (
           <button
             aria-label={`Ver foto de ${p.uploaderName}`}
-            className="focus-ring aspect-square w-full overflow-hidden rounded-[10px] bg-[#154D35] sm:rounded-[14px]"
+            className="focus-ring aspect-square w-full overflow-hidden rounded-[10px] bg-[#154D35] transition-transform duration-150 active:scale-[0.96] sm:rounded-[14px]"
             key={p.id}
-            onClick={() => setViewer(i)}
+            onClick={() => open(i)}
             style={bg(p.thumbUrl, "cover")}
             type="button"
           >
@@ -200,69 +239,88 @@ export function PublicGallery({ isAdminPreview = false }: { isAdminPreview?: boo
       ) : null}
       {loading && photos.length === 0 ? <p className="mt-10 text-center text-sm text-[#C9C5B2]">Cargando recuerdos…</p> : null}
 
-      {current ? (
-        <div
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex flex-col bg-[#08120A]/97 px-3 pb-5 pt-4 sm:px-8"
-          onTouchEnd={(e) => {
-            if (touchStartX.current === null) return;
-            const dx = e.changedTouches[0].clientX - touchStartX.current;
-            if (Math.abs(dx) > 50) move(dx < 0 ? 1 : -1);
-            touchStartX.current = null;
-          }}
-          onTouchStart={(e) => {
-            touchStartX.current = e.touches[0].clientX;
-          }}
-          role="dialog"
-          style={noSave}
-        >
-          <div className="flex items-center justify-between gap-4">
-            <div className="min-w-0">
-              <p className="font-display truncate text-xl">{current.uploaderName}</p>
-              <p className="text-sm capitalize text-[#C9C5B2]">{whenFormatter.format(new Date(current.createdAt))}</p>
+      <AnimatePresence>
+        {current ? (
+          <motion.div
+            animate={{ opacity: 1 }}
+            aria-modal="true"
+            className="fixed inset-0 z-50 flex flex-col bg-[#08120A]/97 px-3 pb-5 pt-4 sm:px-8"
+            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }}
+            key="viewer"
+            role="dialog"
+            style={noSave}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+          >
+            <div className="flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <p className="font-display truncate text-xl">{current.uploaderName}</p>
+                <p className="text-sm capitalize text-[#C9C5B2]">{whenFormatter.format(new Date(current.createdAt))}</p>
+              </div>
+              <button
+                aria-label="Cerrar"
+                className="focus-ring grid h-12 w-12 shrink-0 place-items-center rounded-full border border-[#F7F3EA]/30"
+                onClick={() => setViewer(null)}
+                type="button"
+              >
+                <X size={20} />
+              </button>
             </div>
-            <button
-              aria-label="Cerrar"
-              className="focus-ring grid h-12 w-12 shrink-0 place-items-center rounded-full border border-[#F7F3EA]/30"
-              onClick={() => setViewer(null)}
-              type="button"
-            >
-              <X size={20} />
-            </button>
-          </div>
 
-          <div className="relative my-4 min-h-0 flex-1">
-            <div
-              aria-label={`Foto de ${current.uploaderName}`}
-              className="absolute inset-0"
-              role="img"
-              style={bg(current.photoUrl ?? current.thumbUrl, "contain")}
-            />
-            <button
-              aria-label="Foto anterior"
-              className="focus-ring absolute left-0 top-1/2 hidden h-14 w-14 -translate-y-1/2 place-items-center rounded-full border border-[#F7F3EA]/30 bg-[#0C1D0E]/60 disabled:opacity-30 sm:grid"
-              disabled={viewer === 0}
-              onClick={() => move(-1)}
-              type="button"
-            >
-              <ChevronLeft size={22} />
-            </button>
-            <button
-              aria-label="Foto siguiente"
-              className="focus-ring absolute right-0 top-1/2 hidden h-14 w-14 -translate-y-1/2 place-items-center rounded-full border border-[#F7F3EA]/30 bg-[#0C1D0E]/60 disabled:opacity-30 sm:grid"
-              disabled={viewer === photos.length - 1}
-              onClick={() => move(1)}
-              type="button"
-            >
-              <ChevronRight size={22} />
-            </button>
-          </div>
+            <div className="relative my-4 min-h-0 flex-1 overflow-hidden">
+              <AnimatePresence custom={direction} initial>
+                <motion.div
+                  animate="center"
+                  aria-label={`Foto de ${current.uploaderName}`}
+                  className="absolute inset-0 touch-pan-y cursor-grab active:cursor-grabbing"
+                  custom={direction}
+                  drag={photos.length > 1 ? "x" : false}
+                  dragConstraints={{ left: 0, right: 0 }}
+                  dragElastic={0.6}
+                  exit="exit"
+                  initial="enter"
+                  key={current.id}
+                  onDragEnd={onSwipeEnd}
+                  role="img"
+                  style={bg(current.photoUrl ?? current.thumbUrl, "contain")}
+                  transition={
+                    reduceMotion
+                      ? { duration: 0.18 }
+                      : {
+                          x: { type: "spring", stiffness: 300, damping: 32 },
+                          scale: { type: "spring", stiffness: 260, damping: 26 },
+                          opacity: { duration: 0.2 },
+                        }
+                  }
+                  variants={reduceMotion ? fadeVariants : slideVariants}
+                />
+              </AnimatePresence>
+              <button
+                aria-label="Foto anterior"
+                className="focus-ring absolute left-0 top-1/2 z-10 hidden h-14 w-14 -translate-y-1/2 place-items-center rounded-full border border-[#F7F3EA]/30 bg-[#0C1D0E]/60 transition-opacity disabled:opacity-30 sm:grid"
+                disabled={viewer === 0}
+                onClick={() => move(-1)}
+                type="button"
+              >
+                <ChevronLeft size={22} />
+              </button>
+              <button
+                aria-label="Foto siguiente"
+                className="focus-ring absolute right-0 top-1/2 z-10 hidden h-14 w-14 -translate-y-1/2 place-items-center rounded-full border border-[#F7F3EA]/30 bg-[#0C1D0E]/60 transition-opacity disabled:opacity-30 sm:grid"
+                disabled={viewer === photos.length - 1}
+                onClick={() => move(1)}
+                type="button"
+              >
+                <ChevronRight size={22} />
+              </button>
+            </div>
 
-          <p className="text-center text-[0.8rem] text-[#A8A48E]">
-            {viewer! + 1} de {total} · Desliza para ver la siguiente
-          </p>
-        </div>
-      ) : null}
+            <p className="text-center text-[0.8rem] text-[#A8A48E]">
+              {viewer! + 1} de {total} · Desliza para ver la siguiente
+            </p>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </main>
   );
 }

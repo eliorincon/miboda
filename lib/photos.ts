@@ -413,18 +413,39 @@ export type PublicPhoto = {
  * Fotos listas, más recientes primero. Las de prueba solo se incluyen para los
  * novios (vista previa); los invitados nunca las ven.
  */
-export async function listPublicPhotos(opts: { offset: number; limit: number; includeTest?: boolean }) {
-  let query = db()
+export async function listPublicPhotos(opts: {
+  offset: number;
+  limit: number;
+  includeTest?: boolean;
+  uploader?: string;
+  withUploaders?: boolean;
+}) {
+  const supabase = db();
+  let query = supabase
     .from("photos")
     .select("id, uploader_name, created_at, ready_at, width, height, storage_path, thumb_path", {
       count: "exact",
     })
     .eq("status", "ready");
   if (!opts.includeTest) query = query.neq("access_mode", "admin");
+  if (opts.uploader) query = query.eq("uploader_name", opts.uploader);
   const { data, count, error } = await query
     .order("created_at", { ascending: false })
     .range(opts.offset, opts.offset + opts.limit - 1);
   if (error) throw new PhotoError("No pudimos cargar la galería. Intenta de nuevo.", 500);
+
+  // Personas que compartieron (para los filtros), solo en la primera página
+  let uploaders: PhotoUploaderCount[] | undefined;
+  if (opts.withUploaders) {
+    let names = supabase.from("photos").select("uploader_name").eq("status", "ready");
+    if (!opts.includeTest) names = names.neq("access_mode", "admin");
+    const { data: nameRows } = await names;
+    const counts = new Map<string, number>();
+    for (const r of nameRows ?? []) counts.set(r.uploader_name, (counts.get(r.uploader_name) ?? 0) + 1);
+    uploaders = [...counts.entries()]
+      .map(([name, n]) => ({ name, count: n }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "es"));
+  }
 
   const rows = data ?? [];
   const urls = await signMany(
@@ -433,6 +454,7 @@ export async function listPublicPhotos(opts: { offset: number; limit: number; in
   );
   return {
     total: count ?? 0,
+    uploaders,
     photos: rows.map(
       (r): PublicPhoto => ({
         id: r.id,

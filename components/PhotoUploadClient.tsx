@@ -15,12 +15,15 @@ import {
   QrCode,
   RotateCcw,
   ShieldCheck,
+  Sparkles,
   Wifi,
   WifiOff,
 } from "lucide-react";
+import { AnimatePresence, motion, MotionConfig, useReducedMotion } from "framer-motion";
 import Link from "next/link";
 import { type FormEvent, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Countdown } from "./Countdown";
+import { PhotoTabBar } from "./PhotoTabBar";
 import { detectImageType, isImageFile, preparePhoto, type PreparedPhoto } from "@/lib/photo-prepare";
 import type { PhotoWindowState } from "@/lib/settings";
 import { createSupabaseBrowserClient } from "@/lib/supabase";
@@ -53,6 +56,8 @@ type Item = {
   status: ItemStatus;
   retryIn?: number;
   message?: string;
+  /** Si falló, ¿vale la pena ofrecer "Reintentar"? */
+  retryable?: boolean;
 };
 
 type Work = {
@@ -92,9 +97,28 @@ const sleep = (ms: number) => new Promise((r) => window.setTimeout(r, ms));
 
 // ─── Piezas visuales ─────────────────────────────────────────────────────────
 
-function Shell({ children, isAdminTest, simular }: { children: ReactNode; isAdminTest: boolean; simular: string | null }) {
+const EASE_OUT: [number, number, number, number] = [0.22, 1, 0.36, 1];
+
+function Shell({
+  children,
+  isAdminTest,
+  simular,
+  shareHref,
+}: {
+  children: ReactNode;
+  isAdminTest: boolean;
+  simular: string | null;
+  shareHref: string;
+}) {
   return (
-    <main className="mx-auto flex min-h-[100svh] w-full max-w-md flex-col px-5 pb-8 pt-6 text-[#F7F3EA]">
+    <MotionConfig reducedMotion="user">
+    <div className="photo-app">
+      <motion.main
+        animate={{ opacity: 1, y: 0 }}
+        className="mx-auto flex min-h-[100svh] w-full max-w-md flex-col px-5 pb-32 pt-6 text-[#F7F3EA]"
+        initial={{ opacity: 0, y: 14 }}
+        transition={{ duration: 0.5, ease: EASE_OUT }}
+      >
       {isAdminTest ? (
         <div className="mb-5 flex items-start gap-2 rounded-xl bg-[#F7F3EA] px-3.5 py-2.5 text-[0.8rem] font-semibold leading-5 text-[#154D35]">
           <ShieldCheck className="mt-0.5 shrink-0" size={16} />
@@ -105,14 +129,17 @@ function Shell({ children, isAdminTest, simular }: { children: ReactNode; isAdmi
         </div>
       ) : null}
       {children}
-    </main>
+      </motion.main>
+      <PhotoTabBar active="share" shareHref={shareHref} />
+    </div>
+    </MotionConfig>
   );
 }
 
 function Brand({ compact = false }: { compact?: boolean }) {
   return (
     <div className="flex flex-col items-center gap-0.5 text-center">
-      <p className={`font-script leading-none text-[#A39F88] ${compact ? "text-[1.75rem]" : "text-[2.1rem]"}`}>
+      <p className={`gold-text font-script leading-none ${compact ? "text-[1.75rem]" : "text-[2.4rem]"}`}>
         Zequelly &amp; Elio
       </p>
       <p className="text-[0.68rem] font-semibold uppercase tracking-[0.3em] text-[#A39F88]">
@@ -124,8 +151,44 @@ function Brand({ compact = false }: { compact?: boolean }) {
 
 function IconBadge({ children }: { children: ReactNode }) {
   return (
-    <div className="grid h-16 w-16 place-items-center rounded-full border border-[#A39F88]/45 bg-[#0C1D0E]/40 text-[#A39F88]">
-      {children}
+    <div className="relative grid h-[72px] w-[72px] place-items-center">
+      <motion.span
+        animate={{ scale: [1, 1.18, 1], opacity: [0.5, 0, 0.5] }}
+        aria-hidden="true"
+        className="absolute inset-0 rounded-full border border-[#A39F88]/50"
+        transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <div className="photo-glass grid h-16 w-16 place-items-center rounded-full text-[#E9DFBF]">{children}</div>
+    </div>
+  );
+}
+
+/** Ilustración: pila de fotos que flota suavemente */
+function PhotoStack() {
+  const cards = [
+    { rotate: -11, x: -34, y: 6, tone: "from-[#2E4A3A] to-[#154D35]" },
+    { rotate: 9, x: 34, y: 2, tone: "from-[#6B5E45] to-[#3E5A44]" },
+    { rotate: -2, x: 0, y: -4, tone: "from-[#E9DFBF] to-[#A39F88]" },
+  ];
+  return (
+    <div aria-hidden="true" className="relative mx-auto h-32 w-44">
+      {cards.map((c, i) => (
+        <motion.div
+          animate={{ rotate: c.rotate, x: c.x, y: [c.y, c.y - 5, c.y], opacity: 1 }}
+          className="absolute left-1/2 top-1/2 -ml-[46px] -mt-[56px] h-28 w-[92px] rounded-[14px] bg-white/95 p-1.5 shadow-[0_16px_40px_rgba(0,0,0,0.45)]"
+          initial={{ rotate: 0, x: 0, y: 30, opacity: 0 }}
+          key={i}
+          transition={{
+            delay: 0.1 + i * 0.08,
+            y: { duration: 4 + i, repeat: Infinity, ease: "easeInOut" },
+            default: { type: "spring", stiffness: 160, damping: 16 },
+          }}
+        >
+          <div className={`grid h-full w-full place-items-center rounded-[9px] bg-gradient-to-br ${c.tone}`}>
+            {i === 2 ? <Heart className="text-[#0C1D0E]/70" size={22} /> : null}
+          </div>
+        </motion.div>
+      ))}
     </div>
   );
 }
@@ -149,19 +212,10 @@ function GalleryNote({ plural }: { plural: boolean }) {
 }
 
 const primaryBtn =
-  "focus-ring flex min-h-14 w-full items-center justify-center gap-2.5 rounded-full bg-[#F7F3EA] px-6 text-base font-semibold text-[#0C1D0E] shadow-[0_18px_45px_rgba(0,0,0,0.28)] transition active:scale-[0.99] disabled:opacity-60";
+  "btn-ivory focus-ring flex min-h-14 w-full items-center justify-center gap-2.5 rounded-full px-6 text-base font-semibold disabled:opacity-60";
 const secondaryBtn =
-  "focus-ring flex min-h-[52px] w-full items-center justify-center gap-2.5 rounded-full border border-[#F7F3EA]/40 px-6 text-[0.95rem] font-semibold text-[#F7F3EA] transition active:scale-[0.99]";
-const glassCard = "rounded-3xl border border-[#F7F3EA]/16 bg-[#F7F3EA]/8";
-
-const STATUS_STYLE: Record<ItemStatus, string> = {
-  queued: "bg-[#F7F3EA]/12 text-[#E8E4D6]",
-  preparing: "bg-[#F7F3EA]/12 text-[#E8E4D6]",
-  uploading: "bg-[#154D35]/90 text-[#F7F3EA]",
-  retrying: "bg-[#D6AA5A]/22 text-[#F3E6C8]",
-  saved: "bg-[#F7F3EA]/92 text-[#0C1D0E]",
-  failed: "bg-[#C45C4E]/22 text-[#F6D3CC]",
-};
+  "btn-glass focus-ring flex min-h-[52px] w-full items-center justify-center gap-2.5 rounded-full px-6 text-[0.95rem] font-semibold text-[#F7F3EA]";
+const glassCard = "photo-glass rounded-3xl";
 
 function statusLabel(item: Item) {
   switch (item.status) {
@@ -185,6 +239,7 @@ function statusLabel(item: Item) {
 export function PhotoUploadClient(props: Props) {
   const { mode, isAdminTest, simular, bucket } = props;
   const plural = mode === "guest" && props.seats > 1;
+  const shareHref = mode === "guest" && props.code ? `/fotos?code=${encodeURIComponent(props.code)}` : "/fotos";
 
   const [windowState, setWindowState] = useState<PhotoWindowState>(props.windowState);
   const [name, setName] = useState("");
@@ -353,12 +408,16 @@ export function PhotoUploadClient(props: Props) {
         return;
       } catch (e) {
         if (e instanceof FatalUploadError) {
-          updateItem(id, { status: "failed", message: e.message });
+          updateItem(id, {
+            status: "failed",
+            message: e.message,
+            retryable: e.message !== "Esta foto no se pudo preparar.",
+          });
           if (e.limitReached) setRemaining(0);
           return;
         }
         if (attempt === RETRY_DELAYS.length) {
-          updateItem(id, { status: "failed", message: "Parece que la señal está débil." });
+          updateItem(id, { status: "failed", message: "Parece que la señal está débil.", retryable: true });
           return;
         }
         for (let s = RETRY_DELAYS[attempt]; s > 0; s -= 1) {
@@ -463,7 +522,7 @@ export function PhotoUploadClient(props: Props) {
 
   if (mode === "invalid") {
     return (
-      <Shell isAdminTest={false} simular={null}>
+      <Shell isAdminTest={false} shareHref={shareHref} simular={null}>
         <Brand />
         <div className="flex flex-1 flex-col items-center justify-center gap-5 text-center">
           <IconBadge>
@@ -495,7 +554,7 @@ export function PhotoUploadClient(props: Props) {
 
   if (windowState === "before" || windowState === "disabled") {
     return (
-      <Shell isAdminTest={isAdminTest} simular={simular}>
+      <Shell isAdminTest={isAdminTest} shareHref={shareHref} simular={simular}>
         <Brand />
         <div className="mt-10 flex flex-col items-center gap-6 text-center">
           <IconBadge>
@@ -533,7 +592,7 @@ export function PhotoUploadClient(props: Props) {
 
   if (windowState === "after") {
     return (
-      <Shell isAdminTest={isAdminTest} simular={simular}>
+      <Shell isAdminTest={isAdminTest} shareHref={shareHref} simular={simular}>
         <p className="text-center text-[0.68rem] font-semibold uppercase tracking-[0.3em] text-[#A39F88]">
           Nuestra noche en fotos
         </p>
@@ -565,7 +624,7 @@ export function PhotoUploadClient(props: Props) {
 
   if (mode === "qr" && !nameConfirmed) {
     return (
-      <Shell isAdminTest={isAdminTest} simular={simular}>
+      <Shell isAdminTest={isAdminTest} shareHref={shareHref} simular={simular}>
         <Brand />
         <form className="mt-12 flex flex-col items-center gap-6 text-center" onSubmit={confirmName}>
           <div className="flex flex-col gap-3.5">
@@ -615,7 +674,7 @@ export function PhotoUploadClient(props: Props) {
   // Límite alcanzado y nada pendiente
   if (remaining === 0 && !busy) {
     return (
-      <Shell isAdminTest={isAdminTest} simular={simular}>
+      <Shell isAdminTest={isAdminTest} shareHref={shareHref} simular={simular}>
         <Brand />
         <div className="mt-8 flex flex-col items-center gap-5 text-center">
           <IconBadge>
@@ -700,10 +759,11 @@ export function PhotoUploadClient(props: Props) {
   // Abierta, todavía sin fotos elegidas
   if (!total) {
     return (
-      <Shell isAdminTest={isAdminTest} simular={simular}>
+      <Shell isAdminTest={isAdminTest} shareHref={shareHref} simular={simular}>
         {fileInputs}
         <Brand />
         <div className="mt-6 flex flex-col items-center gap-6 text-center">
+          <PhotoStack />
           <div className="flex flex-col gap-3.5">
             <h1 className="font-display text-[2.1rem] leading-tight">Hola, {greetingName}</h1>
             <p className="text-pretty leading-7 text-[#E8E4D6]">
@@ -713,8 +773,8 @@ export function PhotoUploadClient(props: Props) {
             </p>
           </div>
           {limit !== null && remaining !== null ? (
-            <p className="flex items-center gap-2 rounded-full border border-[#F7F3EA]/18 bg-[#F7F3EA]/10 px-4 py-2 text-sm text-[#E8E4D6]">
-              <Heart size={16} />
+            <p className="btn-glass flex items-center gap-2 rounded-full px-4 py-2 text-sm text-[#E8E4D6]">
+              <Heart className="text-[#E9DFBF]" size={16} />
               {remaining === limit
                 ? `${plural ? "Pueden" : "Puedes"} compartir hasta ${limit} fotos`
                 : `${plural ? "Les" : "Te"} quedan ${remaining} de ${limit} fotos`}
@@ -735,8 +795,8 @@ export function PhotoUploadClient(props: Props) {
         </div>
         <div className="flex-1" />
         <div className="mt-8 flex flex-col gap-4">
-          <div className="flex gap-3 rounded-[1.25rem] border border-[#837E5E]/45 px-4 py-4 text-left">
-            <Wifi className="mt-0.5 shrink-0 text-[#A39F88]" size={20} />
+          <div className="photo-glass flex gap-3 rounded-[1.25rem] px-4 py-4 text-left">
+            <Wifi className="mt-0.5 shrink-0 text-[#E9DFBF]" size={20} />
             <span className="text-sm leading-6 text-[#E8E4D6]">
               ¿Poca señal en el salón? No pasa nada: {plural ? "pueden" : "puedes"} subirlas mañana con WiFi.{" "}
               {plural ? "Tienen" : "Tienes"} hasta el lunes 2 de noviembre a las 23:59.
@@ -750,88 +810,125 @@ export function PhotoUploadClient(props: Props) {
 
   // Subiendo / con fotos de esta visita
   const canAddMore = remaining === null || remaining > 0;
+  const failedMessage = items.find((it) => it.status === "failed" && it.message)?.message;
   return (
-    <Shell isAdminTest={isAdminTest} simular={simular}>
+    <Shell isAdminTest={isAdminTest} shareHref={shareHref} simular={simular}>
       {fileInputs}
       <div className="flex items-center justify-between">
-        <p className="font-script text-[1.75rem] leading-none text-[#A39F88]">Zequelly &amp; Elio</p>
+        <p className="gold-text font-script text-[1.9rem] leading-none">Zequelly &amp; Elio</p>
         <p className="max-w-[55%] truncate text-[0.8rem] text-[#C9C5B2]">{greetingName}</p>
       </div>
 
-      <div className={`${glassCard} mt-4 flex flex-col gap-2.5 px-[18px] py-4`}>
-        <div className="flex items-baseline justify-between gap-3">
-          <span className="font-display text-[1.375rem]">
-            {busy ? "Subiendo tus recuerdos" : "Tus fotos quedaron guardadas"}
-          </span>
-          <span className="shrink-0 text-[0.8rem] text-[#C9C5B2]">
-            {saved} de {total}
-          </span>
-        </div>
-        <div className="h-1.5 overflow-hidden rounded-full bg-[#F7F3EA]/14">
-          <div
-            className="h-1.5 rounded-full bg-[#F7F3EA] transition-[width] duration-500"
-            style={{ width: `${total ? Math.round((saved / total) * 100) : 0}%` }}
-          />
-        </div>
-        <span className="text-[0.8rem] text-[#C9C5B2]">
-          {busy ? "Mantén esta página abierta hasta que terminen." : "Tu foto quedó guardada con cariño."}
-        </span>
-      </div>
-
-      {retrying ? (
-        <div className="mt-3 flex items-center gap-2.5 rounded-2xl border border-[#D6AA5A]/45 bg-[#D6AA5A]/14 px-3.5 py-3">
-          <WifiOff className="shrink-0 text-[#E6C98C]" size={20} />
-          <span className="text-sm leading-5 text-[#F3E6C8]">
-            Parece que la señal está débil. Vamos a intentarlo de nuevo…
-          </span>
-        </div>
-      ) : null}
-
-      <ul className="mt-3 flex flex-col gap-2">
-        {items.map((it) => (
-          <li
-            className="flex items-center gap-3 rounded-2xl border border-[#F7F3EA]/10 bg-[#F7F3EA]/5 p-2"
-            key={it.id}
+      <AnimatePresence mode="wait">
+        {busy ? (
+          <motion.div
+            animate={{ opacity: 1, y: 0 }}
+            className={`${glassCard} mt-4 flex flex-col gap-2.5 px-[18px] py-4`}
+            exit={{ opacity: 0, y: -8 }}
+            initial={{ opacity: 0, y: 8 }}
+            key="progress"
           >
-            <div className="h-[52px] w-[52px] shrink-0">
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="font-display text-[1.375rem]">Subiendo tus recuerdos</span>
+              <span className="shrink-0 text-[0.8rem] tabular-nums text-[#C9C5B2]">
+                {saved} de {total}
+              </span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-[#F7F3EA]/12">
+              <motion.div
+                animate={{ width: `${total ? Math.max(4, Math.round((saved / total) * 100)) : 0}%` }}
+                className="h-2 rounded-full bg-gradient-to-r from-[#A39F88] via-[#F7F3EA] to-[#E9DFBF]"
+                initial={false}
+                transition={{ type: "spring", stiffness: 120, damping: 20 }}
+              />
+            </div>
+            <span className="text-[0.8rem] text-[#C9C5B2]">Mantén esta página abierta hasta que terminen.</span>
+          </motion.div>
+        ) : (
+          <motion.div
+            animate={{ opacity: 1, scale: 1 }}
+            className={`${glassCard} relative mt-4 flex flex-col items-center gap-2 overflow-hidden px-5 py-6 text-center`}
+            exit={{ opacity: 0 }}
+            initial={{ opacity: 0, scale: 0.94 }}
+            key="done"
+            transition={{ type: "spring", stiffness: 220, damping: 20 }}
+          >
+            {[0, 1, 2, 3, 4, 5].map((i) => (
+              <motion.span
+                animate={{ opacity: [0, 1, 0], y: [-4, -26 - (i % 3) * 8], x: (i - 2.5) * 22, scale: [0.6, 1, 0.8] }}
+                aria-hidden="true"
+                className="absolute left-1/2 top-12 text-[#E9DFBF]"
+                key={i}
+                transition={{ duration: 1.6, delay: 0.15 + i * 0.07, ease: "easeOut" }}
+              >
+                <Sparkles size={i % 2 ? 12 : 16} />
+              </motion.span>
+            ))}
+            <motion.span
+              animate={{ scale: 1, rotate: 0 }}
+              className="grid h-12 w-12 place-items-center rounded-full bg-[#F7F3EA] text-[#154D35] shadow-[0_10px_30px_rgba(0,0,0,0.35)]"
+              initial={{ scale: 0, rotate: -30 }}
+              transition={{ type: "spring", stiffness: 320, damping: 14, delay: 0.1 }}
+            >
+              <Check size={24} strokeWidth={3} />
+            </motion.span>
+            <span className="font-display text-[1.45rem] leading-tight">
+              {saved === 1 ? "Tu foto quedó guardada con cariño" : `¡Gracias! ${saved} recuerdos guardados`}
+            </span>
+            <span className="text-sm text-[#E8E4D6]">
+              {saved === 1 ? "Ya está en la galería de la noche." : "Ya están en la galería de la noche."}
+            </span>
+            <Link
+              className="btn-ivory focus-ring mt-2 flex min-h-11 items-center gap-2 rounded-full px-5 text-sm font-semibold"
+              href="/fotos/galeria"
+            >
+              <Images size={17} /> Verlas en la galería
+            </Link>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {retrying ? (
+          <motion.div
+            animate={{ opacity: 1, height: "auto" }}
+            className="overflow-hidden"
+            exit={{ opacity: 0, height: 0 }}
+            initial={{ opacity: 0, height: 0 }}
+          >
+            <div className="mt-3 flex items-center gap-2.5 rounded-2xl border border-[#D6AA5A]/45 bg-[#D6AA5A]/14 px-3.5 py-3">
+              <WifiOff className="shrink-0 text-[#E6C98C]" size={20} />
+              <span className="text-sm leading-5 text-[#F3E6C8]">
+                Parece que la señal está débil. Vamos a intentarlo de nuevo…
+              </span>
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+
+      <ul className="mt-4 grid grid-cols-3 gap-2">
+        <AnimatePresence initial={false}>
+          {items.map((it, i) => (
+            <motion.li
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              aria-label={`${it.label}: ${statusLabel(it)}`}
+              className="relative aspect-square overflow-hidden rounded-2xl bg-[#0f2414] shadow-[0_8px_22px_rgba(0,0,0,0.35)] ring-1 ring-[#F7F3EA]/[0.06]"
+              initial={{ opacity: 0, scale: 0.85, y: 12 }}
+              key={it.id}
+              layout
+              transition={{ type: "spring", stiffness: 300, damping: 24, delay: Math.min(i, 8) * 0.03 }}
+            >
               <Thumb item={it} />
-            </div>
-            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-sm text-[#E8E4D6]">{it.label}</span>
-                <span className={`whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_STYLE[it.status]}`}>
-                  {it.status === "saved" ? (
-                    <span className="inline-flex items-center gap-1">
-                      <Check size={12} strokeWidth={3} /> Guardada
-                    </span>
-                  ) : (
-                    statusLabel(it)
-                  )}
-                </span>
-              </div>
-              {it.status === "uploading" || it.status === "preparing" ? (
-                <div className="h-1 overflow-hidden rounded-full bg-[#F7F3EA]/14">
-                  <div className={`h-1 rounded-full bg-[#F7F3EA] ${it.status === "uploading" ? "w-2/3 animate-pulse" : "w-1/5"}`} />
-                </div>
-              ) : null}
-              {it.status === "failed" ? (
-                <div className="flex flex-wrap items-center gap-2">
-                  {it.message ? <span className="text-xs text-[#F6D3CC]">{it.message}</span> : null}
-                  {filesRef.current.has(it.id) && it.message !== "Esta foto no se pudo preparar." ? (
-                    <button
-                      className="focus-ring flex min-h-8 items-center gap-1.5 rounded-full border border-[#F7F3EA]/45 px-3.5 text-[0.8rem] font-semibold"
-                      onClick={() => retry(it.id)}
-                      type="button"
-                    >
-                      <RotateCcw size={14} /> Reintentar
-                    </button>
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
-          </li>
-        ))}
+              <TileStatus
+                canRetry={it.retryable === true}
+                item={it}
+                onRetry={() => retry(it.id)}
+              />
+            </motion.li>
+          ))}
+        </AnimatePresence>
       </ul>
+      {failedMessage ? <p className="mt-2 text-center text-xs text-[#F6D3CC]">{failedMessage}</p> : null}
 
       <div className="flex-1" />
       <div className="mt-6 flex flex-col items-center gap-2.5">
@@ -863,13 +960,97 @@ export function PhotoUploadClient(props: Props) {
 function Thumb({ item }: { item: Item }) {
   if (!item.preview) {
     return (
-      <div className="grid aspect-square h-full w-full place-items-center rounded-[10px] bg-[#154D35] text-[#F7F3EA]/70">
+      <div className="grid aspect-square h-full w-full place-items-center bg-[#154D35] text-[#F7F3EA]/70">
         <ImagePlus size={20} />
       </div>
     );
   }
   return (
     // eslint-disable-next-line @next/next/no-img-element -- miniatura local (blob:), no pasa por next/image
-    <img alt="" className="aspect-square h-full w-full rounded-[10px] object-cover" src={item.preview} />
+    <img alt="" className="aspect-square h-full w-full object-cover" src={item.preview} />
+  );
+}
+
+/** Capa de estado sobre cada miniatura: anillo de progreso, check o reintento */
+function TileStatus({ item, canRetry, onRetry }: { item: Item; canRetry: boolean; onRetry: () => void }) {
+  const reduceMotion = useReducedMotion();
+  const active = item.status === "preparing" || item.status === "uploading";
+  return (
+    <>
+      <AnimatePresence>
+        {item.status !== "saved" ? (
+          <motion.div
+            animate={{ opacity: 1 }}
+            className={`absolute inset-0 grid place-items-center ${
+              item.status === "failed" ? "bg-[#3a0f0a]/65" : item.status === "queued" ? "bg-black/45" : "bg-black/35"
+            }`}
+            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }}
+          >
+            {active ? (
+              <div className="relative grid h-11 w-11 place-items-center">
+                <svg aria-hidden="true" className="absolute inset-0" viewBox="0 0 44 44">
+                  <circle cx="22" cy="22" fill="none" r="18" stroke="rgba(247,243,234,0.22)" strokeWidth="3.5" />
+                </svg>
+                <motion.svg
+                  animate={reduceMotion ? undefined : { rotate: 360 }}
+                  aria-hidden="true"
+                  className="absolute inset-0"
+                  transition={{ duration: item.status === "preparing" ? 1.6 : 0.9, repeat: Infinity, ease: "linear" }}
+                  viewBox="0 0 44 44"
+                >
+                  <circle
+                    cx="22"
+                    cy="22"
+                    fill="none"
+                    r="18"
+                    stroke="#F7F3EA"
+                    strokeDasharray={item.status === "preparing" ? "22 92" : "52 62"}
+                    strokeLinecap="round"
+                    strokeWidth="3.5"
+                  />
+                </motion.svg>
+              </div>
+            ) : null}
+            {item.status === "queued" ? (
+              <span className="rounded-full bg-black/40 px-2.5 py-1 text-[0.7rem] font-semibold text-[#E8E4D6]">En cola</span>
+            ) : null}
+            {item.status === "retrying" ? (
+              <span className="flex flex-col items-center gap-1 text-[#F3E6C8]">
+                <WifiOff size={18} />
+                <span className="text-[0.7rem] font-semibold tabular-nums">{item.retryIn ?? 0} s</span>
+              </span>
+            ) : null}
+            {item.status === "failed" ? (
+              canRetry ? (
+                <button
+                  aria-label="Reintentar esta foto"
+                  className="btn-glass focus-ring grid h-11 w-11 place-items-center rounded-full text-[#F7F3EA]"
+                  onClick={onRetry}
+                  type="button"
+                >
+                  <RotateCcw size={18} />
+                </button>
+              ) : (
+                <span className="px-2 text-center text-[0.7rem] font-semibold text-[#F6D3CC]">No se pudo preparar</span>
+              )
+            ) : null}
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+      <AnimatePresence>
+        {item.status === "saved" ? (
+          <motion.span
+            animate={{ scale: 1, opacity: 1 }}
+            aria-hidden="true"
+            className="absolute bottom-1.5 right-1.5 grid h-7 w-7 place-items-center rounded-full bg-[#F7F3EA] text-[#154D35] shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
+            initial={{ scale: 0, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 500, damping: 15 }}
+          >
+            <Check size={15} strokeWidth={3.2} />
+          </motion.span>
+        ) : null}
+      </AnimatePresence>
+    </>
   );
 }
